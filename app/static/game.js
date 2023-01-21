@@ -132,21 +132,19 @@ export default function createGame() {
     state.players[command.winner].wins.push(command);
 
     let newPosition = currentPosition + 1;
-    console.log(
-      ``
-    );
     if (currentPosition >= qtdPlayers() - 1) {
       newPosition = 0;
     }
 
     const newPlayerTurn = players[newPosition];
-    console.log(`In this turn pass from "${command.id}(${currentPosition})" to "${newPlayerTurn}(${newPosition})"`);
+    console.log(
+      `In this turn pass from "${command.id}(position: ${currentPosition})" to "${newPlayerTurn}(position: ${newPosition})"`
+    );
     state.round.current = newPlayerTurn;
 
     for (const id of getPlayers()) {
       state.players[id].round = { finished: false, card: null };
     }
-    console.log(state);
   }
 
   return {
