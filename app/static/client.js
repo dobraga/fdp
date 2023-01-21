@@ -11,8 +11,8 @@ socket.on("setup", function (state) {
 });
 
 socket.on("connect", function () {
-  // username = prompt("Please enter your name");
-  username = socket.id;
+  username = prompt("Please enter your name");
+  // username = socket.id;
   console.log(`-> "new_user" "${username}"`);
   socket.emit("new_user", { id: username });
 });

@@ -1,4 +1,3 @@
-import { config } from "https://deno.land/x/dotenv/mod.ts";
 import { Server } from "https://deno.land/x/socket_io/mod.ts";
 import { Application } from "https://deno.land/x/oak/mod.ts";
 import { serve } from "https://deno.land/std/http/server.ts";
@@ -56,6 +55,5 @@ const handler = io.handler(async (req) => {
 });
 
 await serve(handler, {
-  hostname: config().HOST,
-  port: parseInt(config().PORT),
+  port: 8080,
 });

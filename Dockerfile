@@ -1,11 +1,11 @@
 FROM denoland/deno
 
-EXPOSE 8000
+EXPOSE 8080
 
-WORKDIR /app
+WORKDIR /dir/
+COPY app/ /dir/app/
+COPY ./.env /dir/app/
 
-ADD app/ /app
+RUN deno cache /dir/app/app.ts
 
-RUN deno cache server.js
-
-CMD ["run", "--allow-net", "--allow-read", "server.js"]
+CMD ["run", "--allow-net", "--allow-read", "/dir/app/app.ts"]
