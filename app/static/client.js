@@ -14,7 +14,7 @@ socket.on("connect", function () {
   // username = prompt("Please enter your name");
   username = socket.id;
   console.log(`-> "new_user" "${username}"`);
-  socket.emit("new_user", {'id': username});
+  socket.emit("new_user", { id: username });
 });
 
 socket.on("new_user", (command) => {
@@ -50,13 +50,13 @@ function cardSelected() {
 
   const command = { id: username, card: el[0].innerHTML };
   if (game.yourTurn(username)) {
-    command.winner = el[0].getAttribute('id');
+    command.winner = el[0].getAttribute("id");
+    command.answer = game.state.round.card;
     console.log(`-> "selected_winner" "${JSON.stringify(command)}"`);
     socket.emit("selected_winner", command);
   } else {
     console.log(`-> "selected_card" "${JSON.stringify(command)}"`);
     socket.emit("selected_card", command);
   }
-
 }
 document.getElementById("finish").addEventListener("click", cardSelected);

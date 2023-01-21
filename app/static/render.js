@@ -35,6 +35,8 @@ function renderCards(game, username) {
   const isBlocked = game.isBlocked(username);
   cards.innerHTML = "";
 
+  document.querySelector("#principal_card").innerHTML = game.state.round.card;
+
   if (game.yourTurn(username)) {
     const selectedCards = game.getSelectedCards();
     const finished = game.allPlayersFinished();

@@ -3,8 +3,11 @@ export default function createGame() {
     players: {},
     round: {
       current: null,
+      card: null,
     },
     qtdPlayers: 0,
+    cards_white: [],
+    cards_black: [],
   };
 
   // Add a player
@@ -12,20 +15,21 @@ export default function createGame() {
     const id = command.id;
 
     state.players[id] = {
-      hand: ["123", "456", "789", "10", "11"],
+      hand: state.cards_white.splice(0, 5),
       wins: [],
       round: {
         finished: false,
         card: null,
       },
     };
-    state.qtdPlayers += 1
+    state.qtdPlayers += 1;
 
     if (qtdPlayers() == 1 || !state.round.current) {
+      state.round.card = state.cards_black.pop();
       state.round.current = id;
     }
 
-    console.log(`New client connected: ${id} -> ${JSON.stringify(state)}`);
+    console.log(`New client connected: ${id}`);
   }
 
   // Remove the player
@@ -143,8 +147,14 @@ export default function createGame() {
     state.round.current = newPlayerTurn;
 
     for (const id of getPlayers()) {
+      const index = state.players[id].hand.indexOf(
+        state.players[id].round.card
+      );
+      state.players[id].hand[index] = state.cards_white.pop()
       state.players[id].round = { finished: false, card: null };
     }
+
+    state.round.card = state.cards_black.pop();
   }
 
   return {

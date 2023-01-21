@@ -5,10 +5,17 @@ import { serve } from "https://deno.land/std/http/server.ts";
 
 import router from "./routes/ws.ts";
 import createGame from "./static/game.js";
+import shuffle from "./static/shuffle.js"
+import cards_white_ from "./static/cards_white.json"  assert { type: "json" };
+import cards_black_ from "./static/cards_black.json"  assert { type: "json" };
 
+const cards_white = shuffle(cards_white_)
+const cards_black = shuffle(cards_black_)
 const io = new Server();
 const app = new Application();
 const game = createGame();
+game.state.cards_white = cards_white
+game.state.cards_black = cards_black
 
 app.use(router.routes());
 app.use(router.allowedMethods());
