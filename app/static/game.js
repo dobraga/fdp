@@ -1,114 +1,159 @@
 export default function createGame() {
-  const players = {};
+  const state = {
+    players: {},
+    round: {
+      current: null,
+    },
+    qtdPlayers: 0,
+  };
 
   // Add a player
   function addPlayer(command) {
     const id = command.id;
 
-    players[id] = {
+    state.players[id] = {
       hand: ["123", "456", "789", "10", "11"],
       wins: [],
       round: {
-        yourTurn: qtdPlayers() == 0,
         finished: false,
         card: null,
       },
     };
-    console.log(
-      `New client connected: ${id} -> ${JSON.stringify(players[id])}`
-    );
+    state.qtdPlayers += 1
+
+    if (qtdPlayers() == 1 || !state.round.current) {
+      state.round.current = id;
+    }
+
+    console.log(`New client connected: ${id} -> ${JSON.stringify(state)}`);
   }
 
   // Remove the player
   function removePlayer(command) {
     const id = command.id;
     console.log(`Client ${id} disconnected`);
-    delete players[id];
+    delete state.players[id];
+    state.qtdPlayers -= 1;
   }
 
-  // Set players
-  function setPlayers(newPlayers) {
-    Object.assign(players, newPlayers);
+  // Get list of players
+  function getPlayers() {
+    return Object.keys(state.players);
   }
 
-  // All players finished
+  // Set state
+  function setState(newState) {
+    Object.assign(state, newState);
+  }
+
+  // Check if all players finished
   function allPlayersFinished() {
-    var finished = true;
-    for (const check_id of Object.keys(players)) {
+    let finished = true;
+    for (const check_id of getPlayers()) {
       finished =
         finished &&
-        (players[check_id].round.yourTurn || players[check_id].round.finished);
+        (yourTurn(check_id) || state.players[check_id].round.finished);
     }
     return finished;
   }
 
-  // Is blocked
+  // Check is blocked
   function isBlocked(id) {
+    let check;
     if (yourTurn(id)) {
       if (qtdPlayers() == 1) {
-        var check = true;
+        check = true;
       } else {
-        var check = !allPlayersFinished();
+        check = !allPlayersFinished();
       }
     } else {
-      var check = youFinished(id);
+      check = youFinished(id);
     }
     console.log(`= is blocked ${id}? ${check}`);
     return check;
   }
 
-  // Your turn
+  // Check if is your turn
   function yourTurn(id) {
-    if (players[id] != undefined) {
-      return players[id].round.yourTurn;
+    if (state.players[id] != undefined) {
+      return state.round.current == id;
     }
-    return false
+    return false;
   }
 
-  // YourFinished(id)
+  // Check if the user finish the round
   function youFinished(id) {
-    if (players[id] != undefined) {
-      return players[id].round.finished;
+    if (state.players[id] != undefined) {
+      return state.players[id].round.finished;
     }
-    return false
+    return false;
   }
 
   // Selected card
   function finishRound(command) {
-    players[command.id].round.finished = true;
-    players[command.id].round.card = command.card;
+    state.players[command.id].round.finished = true;
+    state.players[command.id].round.card = command.card;
   }
 
   // Get selected cards
   function getSelectedCards() {
-    var selectedCards = {};
+    const selectedCards = {};
 
-    for (const id of Object.keys(players)) {
-      if (players[id].round.card != undefined){
-        selectedCards[id] = players[id].round.card.card;
+    for (const id of getPlayers()) {
+      if (state.players[id].round.card != undefined) {
+        selectedCards[id] = state.players[id].round.card;
       }
     }
 
     return selectedCards;
   }
 
-  // 
+  // Get possible cards
   function getMyCards(id) {
-    if (players[id] != undefined) {
-      return players[id].hand
+    if (state.players[id] != undefined) {
+      return state.players[id].hand;
     }
   }
 
   // # players
   function qtdPlayers() {
-    return Object.keys(players).length;
+    return state.qtdPlayers;
+  }
+
+  // # where the player wins
+  function qtdWins(id) {
+    return state.players[id].wins.length;
+  }
+
+  // Set winner and next round
+  function setWinner(command) {
+    const players = getPlayers();
+    const currentPosition = players.indexOf(command.id);
+    state.players[command.winner].wins.push(command);
+
+    let newPosition = currentPosition + 1;
+    console.log(
+      ``
+    );
+    if (currentPosition >= qtdPlayers() - 1) {
+      newPosition = 0;
+    }
+
+    const newPlayerTurn = players[newPosition];
+    console.log(`In this turn pass from "${command.id}(${currentPosition})" to "${newPlayerTurn}(${newPosition})"`);
+    state.round.current = newPlayerTurn;
+
+    for (const id of getPlayers()) {
+      state.players[id].round = { finished: false, card: null };
+    }
+    console.log(state);
   }
 
   return {
-    players,
+    state,
     addPlayer,
     removePlayer,
-    setPlayers,
+    setState,
     isBlocked,
     finishRound,
     yourTurn,
@@ -117,5 +162,7 @@ export default function createGame() {
     getMyCards,
     qtdPlayers,
     allPlayersFinished,
+    setWinner,
+    qtdWins,
   };
 }

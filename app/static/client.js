@@ -1,55 +1,62 @@
-import createGame from "/static/game.js";
-import render from "/static/render.js";
+import createGame from "./game.js";
+import render from "./render.js";
 
-var game = createGame();
-var socket = io();
-var username = socket.id;
+const game = createGame();
+const socket = io();
+let username = "";
 
-socket.once("setup", function (players) {
-  console.log("Receiving all players");
-  game.setPlayers(players);
+socket.on("setup", function (state) {
+  console.log("<- State");
+  game.setState(state);
 });
 
 socket.on("connect", function () {
-  // const username = prompt("Please enter your name")
+  // username = prompt("Please enter your name");
   username = socket.id;
-  socket.emit("new_user", username);
-  console.log(`Player connected on Client with id: ${username}`);
-  render(game, username);
+  console.log(`-> "new_user" "${username}"`);
+  socket.emit("new_user", {'id': username});
 });
 
 socket.on("new_user", (command) => {
-  console.log(`Receiving "new_user" -> "${command.id}"`);
-  game.addPlayer({ id: command.id });
+  console.log(`<- "new_user" "${JSON.stringify(command)}"`);
+  game.addPlayer(command);
   render(game, username);
 });
 
 socket.on("remove_user", (command) => {
-  console.log(`Receiving "new_user" -> "${command.id}"`);
-  game.removePlayer({ id: command.id });
+  console.log(`<- "remove_user" "${JSON.stringify(command)}"`);
+  game.removePlayer(command);
   render(game, username);
 });
 
-socket.on("finished_round", (command) => {
-  console.log(`Receiving ${JSON.stringify(command)}`);
+socket.on("selected_card", (command) => {
+  console.log(`<- "selected_card" "${JSON.stringify(command)}"`);
   game.finishRound(command);
+  render(game, username);
+});
+
+socket.on("selected_winner", (command) => {
+  console.log(`<-  "selected_winner" ${JSON.stringify(command)}`);
+  game.setWinner(command);
   render(game, username);
 });
 
 // Select card
 function cardSelected() {
-  if (game.isBlocked(username)) {
-    return;
-  }
   const el = document.getElementsByClassName("selected");
-  if (el.length == 0) {
-    console.log("selecione uma carta");
+  if (game.isBlocked(username) || el.length == 0) {
     return;
   }
 
-  var command = {'id': username, 'card': "texto da carta aqui"};
-  console.log(`-> Sending ${JSON.stringify(command)}`);
-  socket.emit("selected_card", command);
-  game.finishRound(command);
+  const command = { id: username, card: el[0].innerHTML };
+  if (game.yourTurn(username)) {
+    command.winner = el[0].getAttribute('id');
+    console.log(`-> "selected_winner" "${JSON.stringify(command)}"`);
+    socket.emit("selected_winner", command);
+  } else {
+    console.log(`-> "selected_card" "${JSON.stringify(command)}"`);
+    socket.emit("selected_card", command);
+  }
+
 }
 document.getElementById("finish").addEventListener("click", cardSelected);

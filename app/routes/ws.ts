@@ -1,13 +1,13 @@
-import { Router, send } from "https://deno.land/x/oak/mod.ts"
+import { Router, send } from "https://deno.land/x/oak/mod.ts";
 
-const router = new Router()
+const router = new Router();
 
 router.get("/", async (ctx) => {
-    await ctx.send({
-        root: `${Deno.cwd()}/app/static`,
-        index: "index.html",
-    });
-})
+  await ctx.send({
+    root: `${Deno.cwd()}/app/static`,
+    index: "index.html",
+  });
+});
 
 // Static content
 router.get("/static/:path+", async (ctx) => {
@@ -16,4 +16,4 @@ router.get("/static/:path+", async (ctx) => {
   });
 });
 
-export default router
+export default router;

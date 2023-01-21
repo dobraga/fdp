@@ -4,14 +4,14 @@ export default function render(game, username) {
 }
 
 function renderListPlayers(game, username) {
-  var ul = document.querySelector("#users");
+  const ul = document.querySelector("#users");
   ul.innerHTML = "";
 
-  for (const player in game.players) {
-    var yourTurn = game.yourTurn(player);
-
-    var li = document.createElement("li");
-    li.appendChild(document.createTextNode(player));
+  for (const player in game.state.players) {
+    const yourTurn = game.yourTurn(player);
+    const li = document.createElement("li");
+    const qtdWins = game.qtdWins(player);
+    li.appendChild(document.createTextNode(`${player}(${qtdWins})`));
 
     if (game.youFinished(player)) {
       li.style.backgroundColor = "#3C6255";
@@ -31,44 +31,45 @@ function renderListPlayers(game, username) {
 }
 
 function renderCards(game, username) {
-  var cards = document.querySelector("#cards");
+  const cards = document.querySelector("#cards");
+  const isBlocked = game.isBlocked(username);
   cards.innerHTML = "";
-  var isBlocked = game.isBlocked(username);
 
   if (game.yourTurn(username)) {
-    var qtdPlayers = game.qtdPlayers() - 1;
-    var selectedCards = game.getSelectedCards();
-    var finished = game.allPlayersFinished();
+    const selectedCards = game.getSelectedCards();
+    const finished = game.allPlayersFinished();
 
-    for (const i of Array(qtdPlayers).keys()) {
-      var card = document.createElement("div");
+    for (const selected in selectedCards) {
+      const card = document.createElement("div");
       card.className = "card";
       if (finished) {
-        card.innerHTML = selectedCards[i];
+        card.innerHTML = selectedCards[selected];
+        const att = document.createAttribute('id');
+        card.setAttributeNode(att);
+        att.value = selected;
         addEventListenerCards(card);
       }
       cards.appendChild(card);
     }
   } else {
-    var myCards = game.getMyCards(username);
-    console.log(myCards);
+    const myCards = game.getMyCards(username);
     for (const i in myCards) {
-      var card = document.createElement("div");
-
+      const card = document.createElement("div");
+      
       card.className = "card";
       card.innerHTML = myCards[i];
       if (!isBlocked) {
         addEventListenerCards(card);
       }
-
       cards.appendChild(card);
     }
   }
 }
 
+// Make the card is clickable
 function addEventListenerCards(card) {
+  card.style.cursor = "pointer";
   card.addEventListener("click", (el) => {
-    console.log("clicked");
     const allCards = Array.from(document.getElementsByClassName("card"));
 
     allCards.forEach((newel) => {
