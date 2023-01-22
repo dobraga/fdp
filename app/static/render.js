@@ -8,23 +8,18 @@ function renderListPlayers(game, username) {
   ul.innerHTML = "";
 
   for (const player in game.state.players) {
-    const yourTurn = game.yourTurn(player);
     const li = document.createElement("li");
     const qtdWins = game.qtdWins(player);
     li.appendChild(document.createTextNode(`${player}(${qtdWins})`));
 
     if (game.youFinished(player)) {
-      li.style.backgroundColor = "#3C6255";
-      li.style.borderRadius = "5px";
-      li.style.padding = "3px 5px 3px 5px";
+      li.classList.add("finished");
     }
-    if (yourTurn) {
-      li.style.backgroundColor = "#6C00FF";
-      li.style.borderRadius = "5px";
-      li.style.padding = "3px 5px 3px 5px";
+    if (game.yourTurn(player)) {
+      li.classList.add("turn");
     }
     if (player == username) {
-      li.style.color = "#FD8A8A";
+      li.classList.add("you");
     }
     ul.appendChild(li);
   }
@@ -42,6 +37,9 @@ function renderCards(game, username) {
     const finished = game.allPlayersFinished();
 
     for (const selected in selectedCards) {
+      if (selected == username) {
+        continue
+      }
       const card = document.createElement("div");
       card.className = "card";
       if (finished) {
@@ -57,7 +55,7 @@ function renderCards(game, username) {
     const myCards = game.getMyCards(username);
     for (const i in myCards) {
       const card = document.createElement("div");
-      
+
       card.className = "card";
       card.innerHTML = myCards[i];
       if (!isBlocked) {

@@ -1,21 +1,23 @@
 export default function createGame() {
   const state = {
     players: {},
-    round: {
-      current: null,
-      card: null,
-    },
+    round: {},
     qtdPlayers: 0,
-    cards_white: [],
-    cards_black: [],
   };
+
+  // Set owner round
+  function setOwnerRound(command) {
+    if (command.round) {
+      state.round.card = command.round.card;
+      state.round.current = command.round.player;
+    }
+  }
 
   // Add a player
   function addPlayer(command) {
     const id = command.id;
 
     state.players[id] = {
-      hand: state.cards_white.splice(0, 5),
       wins: [],
       round: {
         finished: false,
@@ -23,13 +25,12 @@ export default function createGame() {
       },
     };
     state.qtdPlayers += 1;
+    console.log(`New client connected: "${id}", have ${qtdPlayers()} players.`);
+  }
 
-    if (qtdPlayers() == 1 || !state.round.current) {
-      state.round.card = state.cards_black.pop();
-      state.round.current = id;
-    }
-
-    console.log(`New client connected: ${id}`);
+  // Set cards
+  function setCardsHand(command) {
+    state.players[command.id].hand = command.cards;
   }
 
   // Remove the player
@@ -45,7 +46,7 @@ export default function createGame() {
     return Object.keys(state.players);
   }
 
-  // Set state
+  // Set state on setup
   function setState(newState) {
     Object.assign(state, newState);
   }
@@ -93,23 +94,38 @@ export default function createGame() {
     return false;
   }
 
-  // Selected card
+  // Finish round and prepare next round
   function finishRound(command) {
     state.players[command.id].round.finished = true;
     state.players[command.id].round.card = command.card;
+    state.players[command.id].round.index = command.index;
+    state.players[command.id].round.nextCard = command.nextCard;
+  }
+
+  // Buy card
+  function buyCard(command) {
+    const id = command.id;
+    const index = state.players[id].round.index;
+    const nextCard = state.players[id].round.nextCard;
+    state.players[id].hand[index] = nextCard;
   }
 
   // Get selected cards
   function getSelectedCards() {
     const selectedCards = {};
-
     for (const id of getPlayers()) {
       if (state.players[id].round.card != undefined) {
         selectedCards[id] = state.players[id].round.card;
+      } else {
+        selectedCards[id] = 'espera os doentes escolherem as cartas';
       }
     }
-
     return selectedCards;
+  }
+
+  // Get position of selected card
+  function positionCard(command) {
+    return state.players[command.id].hand.indexOf(command.card);
   }
 
   // Get possible cards
@@ -129,12 +145,10 @@ export default function createGame() {
     return state.players[id].wins.length;
   }
 
-  // Set winner and next round
-  function setWinner(command) {
+  // Set next turn
+  function nextTurn() {
     const players = getPlayers();
-    const currentPosition = players.indexOf(command.id);
-    state.players[command.winner].wins.push(command);
-
+    const currentPosition = players.indexOf(state.round.current);
     let newPosition = currentPosition + 1;
     if (currentPosition >= qtdPlayers() - 1) {
       newPosition = 0;
@@ -142,23 +156,27 @@ export default function createGame() {
 
     const newPlayerTurn = players[newPosition];
     console.log(
-      `In this turn pass from "${command.id}(position: ${currentPosition})" to "${newPlayerTurn}(position: ${newPosition})"`
+      `Turn pass from "${state.round.current}(position: ${currentPosition})" to "${newPlayerTurn}(position: ${newPosition})"`
     );
     state.round.current = newPlayerTurn;
+  }
 
+  // Set winner and setup the next round
+  function setWinnerSetupNextTurn(command) {
+    state.players[command.winner].wins.push(command);
     for (const id of getPlayers()) {
-      const index = state.players[id].hand.indexOf(
-        state.players[id].round.card
-      );
-      state.players[id].hand[index] = state.cards_white.pop()
+      if (yourTurn(id)) {
+        continue
+      }
+      buyCard({id: id});
       state.players[id].round = { finished: false, card: null };
     }
-
-    state.round.card = state.cards_black.pop();
+    state.round.card = command.newCard;
   }
 
   return {
     state,
+    setOwnerRound,
     addPlayer,
     removePlayer,
     setState,
@@ -167,10 +185,13 @@ export default function createGame() {
     yourTurn,
     youFinished,
     getSelectedCards,
+    setCardsHand,
+    positionCard,
     getMyCards,
     qtdPlayers,
     allPlayersFinished,
-    setWinner,
+    setWinnerSetupNextTurn,
+    nextTurn,
     qtdWins,
   };
 }
