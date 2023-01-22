@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
 
     // add user for server and client player
     command.cards = deck.select({ "type": "white", "qtd": 10 });
-    socket.emit("set_cards", command);
+    io.emit("set_cards", command);
     game.setCardsHand(command);
   });
 

@@ -61,7 +61,6 @@ function cardSelected() {
   }
   const card = el[0].innerHTML;
   const command = { id: username, card: card };
-  command.index = game.positionCard(command);
   if (game.yourTurn(username)) {
     command.winner = el[0].getAttribute("id");
     command.answer = game.state.round.card;

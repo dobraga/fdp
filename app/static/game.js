@@ -98,15 +98,16 @@ export default function createGame() {
   function finishRound(command) {
     state.players[command.id].round.finished = true;
     state.players[command.id].round.card = command.card;
-    state.players[command.id].round.index = command.index;
     state.players[command.id].round.nextCard = command.nextCard;
   }
 
   // Buy card
   function buyCard(command) {
     const id = command.id;
-    const index = state.players[id].round.index;
+    const card= state.players[id].round.card;
+    const index = positionCard({ id: id, card: card });
     const nextCard = state.players[id].round.nextCard;
+    console.log(`Change ${index}("${card}") -> "${nextCard}"`);
     state.players[id].hand[index] = nextCard;
   }
 
@@ -186,7 +187,6 @@ export default function createGame() {
     youFinished,
     getSelectedCards,
     setCardsHand,
-    positionCard,
     getMyCards,
     qtdPlayers,
     allPlayersFinished,
