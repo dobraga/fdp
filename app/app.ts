@@ -24,7 +24,7 @@ io.on("connection", (socket) => {
     // If first player, then is the owner of first round.
     if (game.qtdPlayers() == 0) {
       command.round = {
-        "card": deck.select({ "type": "black" }),
+        "card": deck.black(),
         "player": username,
       };
       game.setOwnerRound(command);
@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     game.addPlayer(command);
 
     // add user for server and client player
-    command.cards = deck.select({ "type": "white", "qtd": 10 });
+    command.cards = deck.white(10);
     io.emit("set_cards", command);
     game.setCardsHand(command);
   });
@@ -43,28 +43,23 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`<- "disconnect" "${username}"`);
     io.emit("remove_user", { "id": username });
-    if (game.yourTurn(username)) {
-      console.log("remove_current_owner");
-      game.nextTurn();
-    }
     game.removePlayer({ "id": username });
   });
 
   socket.on("selected_card", (command) => {
     console.log(`<-  "selected_card" ${JSON.stringify(command)}`);
-    command.nextCard = deck.select({ "type": "white", "qtd": 1 });
+    command.nextCard = deck.white(command.cards.length);
     io.emit("finish_round", command);
     game.finishRound(command);
   });
 
   socket.on("selected_winner", (command) => {
     console.log(`<-  "selected_winner" ${JSON.stringify(command)}`);
-    command.newCard = deck.select({ "type": "black" });
+    command.newRound = deck.black();
 
     console.log(`->  "next_turn" ${JSON.stringify(command)}`);
     io.emit("next_turn", command);
     game.setWinnerSetupNextTurn(command);
-    game.nextTurn();
   });
 });
 

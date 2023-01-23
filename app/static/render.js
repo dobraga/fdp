@@ -4,13 +4,14 @@ export default function render(game, username) {
 }
 
 function renderListPlayers(game, username) {
-  const ul = document.querySelector("#users");
-  ul.innerHTML = "";
+  const div = document.getElementById("users");
+  div.innerHTML = "";
 
   for (const player in game.state.players) {
-    const li = document.createElement("li");
+    const li = document.createElement("div");
     const qtdWins = game.qtdWins(player);
     li.appendChild(document.createTextNode(`${player}(${qtdWins})`));
+    li.classList.add("user");
 
     if (game.youFinished(player)) {
       li.classList.add("finished");
@@ -21,12 +22,12 @@ function renderListPlayers(game, username) {
     if (player == username) {
       li.classList.add("you");
     }
-    ul.appendChild(li);
+    div.appendChild(li);
   }
 }
 
 function renderCards(game, username) {
-  const cards = document.querySelector("#cards");
+  const cards = document.getElementById("cards");
   const isBlocked = game.isBlocked(username);
   cards.innerHTML = "";
 
@@ -70,12 +71,6 @@ function renderCards(game, username) {
 function addEventListenerCards(card) {
   card.style.cursor = "pointer";
   card.addEventListener("click", (el) => {
-    const allCards = Array.from(document.getElementsByClassName("card"));
-
-    allCards.forEach((newel) => {
-      newel.classList.remove("selected");
-    });
-
-    el.target.classList.add("selected");
+    el.target.classList.toggle("selected");
   });
 }

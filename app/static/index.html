@@ -19,17 +19,22 @@
       crossorigin="anonymous"
     />
 
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="/static/client.js" type="module"></script>
 
     <style>
-      #users li {
-        display: inline;
-        margin-right: 10px;
+      #users {
+        max-width: 99%;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
       }
 
       .principal_card {
-        width: 150px;
-        height: 220px;
+        width: 160px;
+        height: 240px;
         border: 1px solid grey;
         background-color: #181a1b;
         border-radius: 10px;
@@ -38,8 +43,8 @@
       }
 
       .card {
-        width: 150px;
-        height: 220px;
+        width: 160px;
+        height: 240px;
         border: 1px solid grey;
         background-color: #181a1b;
         border-radius: 10px;
@@ -65,10 +70,13 @@
         padding: 3px 5px 3px 5px;
       }
 
-      .turn {
-        background-color: #6c00ff;
+      .user {
         border-radius: 5px;
         padding: 3px 5px 3px 5px;
+      }
+
+      .turn {
+        background-color: #6c00ff;
       }
 
       .you {
@@ -76,7 +84,8 @@
       }
     </style>
 
-    <ul id="users"></ul>
+    <div id="users"></div>
+    <br />
 
     <div id="principal_card" class="principal_card"></div>
     <br />

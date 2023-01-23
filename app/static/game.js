@@ -8,8 +8,9 @@ export default function createGame() {
   // Set owner round
   function setOwnerRound(command) {
     if (command.round) {
-      state.round.card = command.round.card;
       state.round.current = command.round.player;
+      state.round.card = command.round.card.card;
+      state.round.qtdSpaces = command.round.card.qtdSpaces;
     }
   }
 
@@ -37,6 +38,10 @@ export default function createGame() {
   function removePlayer(command) {
     const id = command.id;
     console.log(`Client ${id} disconnected`);
+    if (yourTurn(command.id)) {
+      console.log("remove_current_owner");
+      setNextOwnerPlayer();
+    }
     delete state.players[id];
     state.qtdPlayers -= 1;
   }
@@ -97,26 +102,29 @@ export default function createGame() {
   // Finish round and prepare next round
   function finishRound(command) {
     state.players[command.id].round.finished = true;
-    state.players[command.id].round.card = command.card;
+    state.players[command.id].round.cards = command.cards;
     state.players[command.id].round.nextCard = command.nextCard;
   }
 
   // Buy card
   function buyCard(command) {
     const id = command.id;
-    const card= state.players[id].round.card;
-    const index = positionCard({ id: id, card: card });
-    const nextCard = state.players[id].round.nextCard;
-    console.log(`Change ${index}("${card}") -> "${nextCard}"`);
-    state.players[id].hand[index] = nextCard;
+    const cards= state.players[id].round.cards;
+
+    for (const [i, card] in cards.entries()) {
+      const index = positionCard({ id: id, card: card })
+      const nextCard = state.players[id].round.nextCard[i];
+      console.log(`Change ${index}("${card}") -> "${nextCard}"`);
+      state.players[id].hand[index] = nextCard;
+    }
   }
 
   // Get selected cards
   function getSelectedCards() {
     const selectedCards = {};
     for (const id of getPlayers()) {
-      if (state.players[id].round.card != undefined) {
-        selectedCards[id] = state.players[id].round.card;
+      if (state.players[id].round.cards != undefined) {
+        selectedCards[id] = state.players[id].round.cards;
       } else {
         selectedCards[id] = 'espera os doentes escolherem as cartas';
       }
@@ -146,8 +154,23 @@ export default function createGame() {
     return state.players[id].wins.length;
   }
 
-  // Set next turn
-  function nextTurn() {
+  // Get next owner of turn
+  function getNextOwnerPlayer() {
+    const players = getPlayers();
+    const currentPosition = players.indexOf(state.round.current);
+    let newPosition = currentPosition + 1;
+    if (currentPosition >= qtdPlayers() - 1) {
+      newPosition = 0;
+    }
+
+    const newPlayerTurn = players[newPosition];
+    console.log(
+      `Turn pass from "${state.round.current}(position: ${currentPosition})" to "${newPlayerTurn}(position: ${newPosition})"`
+    );
+    return newPlayerTurn;
+  }
+
+  function setNextOwnerPlayer() {
     const players = getPlayers();
     const currentPosition = players.indexOf(state.round.current);
     let newPosition = currentPosition + 1;
@@ -164,7 +187,10 @@ export default function createGame() {
 
   // Set winner and setup the next round
   function setWinnerSetupNextTurn(command) {
-    state.players[command.winner].wins.push(command);
+    state.players[command.winner].wins = state.players[
+      command.winner
+    ].wins.concat({ cards: command.cards, answer: command.answer});
+
     for (const id of getPlayers()) {
       if (yourTurn(id)) {
         continue
@@ -172,7 +198,15 @@ export default function createGame() {
       buyCard({id: id});
       state.players[id].round = { finished: false, card: null };
     }
-    state.round.card = command.newCard;
+
+    const commandNextTurn = {
+      round: {
+        current: getNextOwnerPlayer(),
+        card: command.newRound.card,
+        qtdSpaces: command.newRound.qtdSpaces,
+      },
+    };
+    setOwnerRound(commandNextTurn);
   }
 
   return {
@@ -191,7 +225,6 @@ export default function createGame() {
     qtdPlayers,
     allPlayersFinished,
     setWinnerSetupNextTurn,
-    nextTurn,
     qtdWins,
   };
 }

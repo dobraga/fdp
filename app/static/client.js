@@ -32,10 +32,6 @@ socket.on("set_cards", (command) => {
 
 socket.on("remove_user", (command) => {
   console.log(`<- "remove_user" "${JSON.stringify(command)}"`);
-  if (game.yourTurn(username)) {
-    console.log("remove_current_owner");
-    game.nextTurn();
-  }
   game.removePlayer(command);
   render(game, username);
 });
@@ -49,20 +45,26 @@ socket.on("finish_round", (command) => {
 socket.on("next_turn", (command) => {
   console.log(`<-  "next_turn" "${JSON.stringify(command)}"`);
   game.setWinnerSetupNextTurn(command);
-  game.nextTurn();
   render(game, username);
 });
 
 // Select card
-function cardSelected() {
-  const el = document.getElementsByClassName("selected");
-  if (game.isBlocked(username) || el.length == 0) {
+function cardSelected(game) {
+  if (game.isBlocked(username)) {
+    swal("Espera sua vez caraio.");
     return;
   }
-  const card = el[0].innerHTML;
-  const command = { id: username, card: card };
+  
+  const elCards = document.getElementsByClassName("selected")
+  if (elCards.length != game.state.round.qtdSpaces) {
+    swal(`Selecione ${game.state.round.qtdSpaces} carta(s)`);
+    return;
+  }
+
+  const cards = Array.from(elCards).map((elem) => elem.innerHTML);
+  const command = { id: username, cards: cards };
   if (game.yourTurn(username)) {
-    command.winner = el[0].getAttribute("id");
+    command.winner = elCards[0].getAttribute("id");
     command.answer = game.state.round.card;
     console.log(`-> "selected_winner" "${JSON.stringify(command)}"`);
     socket.emit("selected_winner", command);
@@ -71,4 +73,4 @@ function cardSelected() {
     socket.emit("selected_card", command);
   }
 }
-document.getElementById("finish").addEventListener("click", cardSelected);
+document.getElementById("finish").addEventListener("click", () => {cardSelected(game)});
