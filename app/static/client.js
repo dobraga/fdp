@@ -57,7 +57,7 @@ function cardSelected(game) {
   
   const elCards = document.getElementsByClassName("selected")
   if (elCards.length != game.state.round.qtdSpaces) {
-    swal(`Selecione ${game.state.round.qtdSpaces} carta(s)`);
+    swal(`Selecione ${game.state.round.qtdSpaces} carta(s), jumento.`);
     return;
   }
 

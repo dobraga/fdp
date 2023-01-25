@@ -187,9 +187,11 @@ export default function createGame() {
 
   // Set winner and setup the next round
   function setWinnerSetupNextTurn(command) {
-    state.players[command.winner].wins = state.players[
-      command.winner
-    ].wins.concat({ cards: command.cards, answer: command.answer});
+    const winner = command.winner
+
+    state.players[winner].wins = state.players[winner].wins.concat([
+      { cards: command.cards, answer: command.answer },
+    ]);
 
     for (const id of getPlayers()) {
       if (yourTurn(id)) {
@@ -202,8 +204,10 @@ export default function createGame() {
     const commandNextTurn = {
       round: {
         current: getNextOwnerPlayer(),
-        card: command.newRound.card,
-        qtdSpaces: command.newRound.qtdSpaces,
+        card: {
+          card: command.newRound.card,
+          qtdSpaces: command.newRound.qtdSpaces
+        }
       },
     };
     setOwnerRound(commandNextTurn);
