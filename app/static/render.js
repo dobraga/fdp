@@ -1,4 +1,5 @@
 export default function render(game, username) {
+  console.log(`Rendering page for ${username}`)
   renderListPlayers(game, username);
   renderCards(game, username);
 }
@@ -27,15 +28,18 @@ function renderListPlayers(game, username) {
 }
 
 function renderCards(game, username) {
+  const yourTurn = game.yourTurn(username);
   const cards = document.getElementById("cards");
   const isBlocked = game.isBlocked(username);
   cards.innerHTML = "";
 
+  console.log(`Your turn? ${yourTurn}`)
   document.querySelector("#principal_card").innerHTML = game.state.round.card;
 
-  if (game.yourTurn(username)) {
+  if (yourTurn) {
     const selectedCards = game.getSelectedCards();
     const finished = game.allPlayersFinished();
+    console.log(`Others players finished? ${finished}`);
 
     for (const selected in selectedCards) {
       if (selected == username) {
