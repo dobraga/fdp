@@ -203,7 +203,7 @@ export default function createGame() {
 
     const commandNextTurn = {
       round: {
-        current: getNextOwnerPlayer(),
+        player: getNextOwnerPlayer(),
         card: {
           card: command.newRound.card,
           qtdSpaces: command.newRound.qtdSpaces
