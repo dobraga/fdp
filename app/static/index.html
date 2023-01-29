@@ -23,6 +23,10 @@
     <script src="/static/client.js" type="module"></script>
 
     <style>
+      #top {
+        background-color: #181a1b;
+      }
+
       #users {
         max-width: 99%;
         margin: 0 auto;
@@ -61,7 +65,7 @@
       }
 
       .selected {
-        border: 2px solid rebeccapurple;
+        border: 1px solid rebeccapurple;
       }
 
       .finished {
@@ -84,17 +88,23 @@
       }
     </style>
 
-    <div id="users"></div>
-    <br />
+    <div id="top" class="sticky-top">
+      <div id="users"></div>
+      <br />
+      <div id="principal_card" class="principal_card"></div>
+      <br />
+    </div>
 
-    <div id="principal_card" class="principal_card"></div>
-    <br />
     <div id="cards" class="cards"></div>
 
     <br />
 
-    <button id="finish" type="button" class="btn btn-primary">
-      Selecionado
-    </button>
+    <div class="text-center">
+      <button id="finish" type="button" class="btn btn-primary">
+        Selecionado
+      </button>
+    </div>
+
+    <br />
   </body>
 </html>
