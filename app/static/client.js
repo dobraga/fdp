@@ -56,19 +56,25 @@ function cardSelected(game) {
   }
   
   const elCards = document.getElementsByClassName("selected")
-  if (elCards.length != game.state.round.qtdSpaces) {
-    swal(`Selecione ${game.state.round.qtdSpaces} carta(s), jumento.`);
-    return;
-  }
-
+  
   const cards = Array.from(elCards).map((elem) => elem.innerHTML);
   const command = { id: username, cards: cards };
   if (game.yourTurn(username)) {
+    if (elCards.length != 1) {
+      swal('Selecione uma carta como vencedora, jumento.');
+      return;
+    }
+
     command.winner = elCards[0].getAttribute("id");
     command.answer = game.state.round.card;
     console.log(`-> "selected_winner" "${JSON.stringify(command)}"`);
     socket.emit("selected_winner", command);
   } else {
+    if (elCards.length != game.state.round.qtdSpaces) {
+      swal(`Selecione ${game.state.round.qtdSpaces} carta(s), jumento.`);
+      return;
+    }
+
     console.log(`-> "selected_card" "${JSON.stringify(command)}"`);
     socket.emit("selected_card", command);
   }
