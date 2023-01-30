@@ -48,7 +48,7 @@ function renderCards(game, username) {
       const card = document.createElement("div");
       card.className = "card";
       if (finished) {
-        card.innerHTML = selectedCards[selected];
+        card.innerHTML = selectedCards[selected].join("<br />|+|<br />");
         const att = document.createAttribute('id');
         card.setAttributeNode(att);
         att.value = selected;
