@@ -1,3 +1,5 @@
+import shuffle from "./shuffle.js";
+
 export default function createGame() {
   const state = {
     players: {},
@@ -17,8 +19,10 @@ export default function createGame() {
   // Add a player
   function addPlayer(command) {
     const id = command.id;
+    const name = command.username;
 
     state.players[id] = {
+      name: command.username,
       wins: [],
       round: {
         finished: false,
@@ -26,7 +30,9 @@ export default function createGame() {
       },
     };
     state.qtdPlayers += 1;
-    console.log(`New client connected: "${id}", have ${qtdPlayers()} players.`);
+    console.log(
+      `New client connected: "${name}(${id})", have ${qtdPlayers()} players.`
+    );
   }
 
   // Set cards
@@ -109,10 +115,10 @@ export default function createGame() {
   // Buy card
   function buyCard(command) {
     const id = command.id;
-    const cards= state.players[id].round.cards;
+    const cards = state.players[id].round.cards;
 
     for (const [i, card] in cards.entries()) {
-      const index = positionCard({ id: id, card: card })
+      const index = positionCard({ id: id, card: card });
       const nextCard = state.players[id].round.nextCard[i];
       console.log(`Change ${index}("${card}") -> "${nextCard}"`);
       state.players[id].hand[index] = nextCard;
@@ -122,11 +128,11 @@ export default function createGame() {
   // Get selected cards
   function getSelectedCards() {
     const selectedCards = {};
-    for (const id of getPlayers()) {
+    for (const id of shuffle(getPlayers())) {
       if (state.players[id].round.cards != undefined) {
         selectedCards[id] = state.players[id].round.cards;
       } else {
-        selectedCards[id] = 'espera os doentes escolherem as cartas';
+        selectedCards[id] = "espera os doentes escolherem as cartas";
       }
     }
     return selectedCards;
@@ -187,7 +193,7 @@ export default function createGame() {
 
   // Set winner and setup the next round
   function setWinnerSetupNextTurn(command) {
-    const winner = command.winner
+    const winner = command.winner;
 
     state.players[winner].wins = state.players[winner].wins.concat([
       { cards: command.cards, answer: command.answer },
@@ -195,9 +201,9 @@ export default function createGame() {
 
     for (const id of getPlayers()) {
       if (yourTurn(id)) {
-        continue
+        continue;
       }
-      buyCard({id: id});
+      buyCard({ id: id });
       state.players[id].round = { finished: false, card: null };
     }
 
@@ -206,23 +212,40 @@ export default function createGame() {
         player: getNextOwnerPlayer(),
         card: {
           card: command.newRound.card,
-          qtdSpaces: command.newRound.qtdSpaces
-        }
+          qtdSpaces: command.newRound.qtdSpaces,
+        },
       },
     };
     setOwnerRound(commandNextTurn);
   }
 
+  // Get player name
+  function getPlayerName(id) {
+    return state.players[id].name;
+  }
+
+  // Get current round
+  function getRound() {
+    return state.round;
+  }
+
   return {
     state,
-    setOwnerRound,
+    setState,
+
     addPlayer,
     removePlayer,
-    setState,
+
+    getPlayerName,
+    getRound,
+    setOwnerRound,
+    getPlayers,
+
     isBlocked,
     finishRound,
     yourTurn,
     youFinished,
+
     getSelectedCards,
     setCardsHand,
     getMyCards,

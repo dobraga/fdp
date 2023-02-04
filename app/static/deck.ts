@@ -1,6 +1,6 @@
 import cards_white from "./cards_white.json" assert { type: "json" };
 import cards_black from "./cards_black.json" assert { type: "json" };
-import shuffle from "./shuffle.ts";
+import shuffle from "./shuffle.js";
 
 export default function createDeck() {
   function white(qtdCards: number) {
