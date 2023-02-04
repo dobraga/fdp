@@ -117,7 +117,7 @@ export default function createGame() {
     const id = command.id;
     const cards = state.players[id].round.cards;
 
-    for (const [i, card] in cards.entries()) {
+    for (const [i, card] of cards.entries()) {
       const index = positionCard({ id: id, card: card });
       const nextCard = state.players[id].round.nextCard[i];
       console.log(`Change ${index}("${card}") -> "${nextCard}"`);
