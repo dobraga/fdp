@@ -45,10 +45,10 @@ socket.on("finish_round", (command) => {
 });
 
 socket.on("next_turn", (command) => {
-  console.log(`<-  "next_turn" "${JSON.stringify(command)}"`);
+  console.log(`<- "next_turn" "${JSON.stringify(command)}"`);
   game.setWinnerSetupNextTurn(command);
   swal(
-    `O vencedor foi ${game.getPlayerName(command.id)}\n\n${command.answer}\n\n${command.cards}`
+    `O vencedor foi ${game.getPlayerName(command.winner)}\n\n${command.answer}\n\n${command.cards}`
   );
   render(game, id);
 });
