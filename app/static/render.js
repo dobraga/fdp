@@ -1,5 +1,5 @@
 export default function render(game, OwnerUsername) {
-  console.log(`Rendering page for ${OwnerUsername}`);
+  console.log(`= rendering page for ${OwnerUsername}`);
   renderListPlayers(game, OwnerUsername);
   renderCards(game, OwnerUsername);
 }
@@ -35,13 +35,11 @@ function renderCards(game, OwnerUsername) {
   const isBlocked = game.isBlocked(OwnerUsername);
   cards.innerHTML = "";
 
-  console.log(`Your turn? ${yourTurn}`);
   document.querySelector("#principal_card").innerHTML = game.getRound().card;
 
   if (yourTurn) {
     const selectedCards = game.getSelectedCards();
     const finished = game.allPlayersFinished();
-    console.log(`Others players finished? ${finished}`);
 
     for (const selected in selectedCards) {
       if (selected == OwnerUsername) {

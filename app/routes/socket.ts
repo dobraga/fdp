@@ -27,7 +27,7 @@ export default function createSocketListen(io: Server, app: Application) {
 
       // add user for server and client player
       command.cards = deck.white(10);
-      io.emit("set_cards", command);
+      socket.emit("set_cards", command);
       game.setCardsHand(command);
     });
 
@@ -40,17 +40,17 @@ export default function createSocketListen(io: Server, app: Application) {
     });
 
     socket.on("selected_card", (command) => {
-      console.log(`<-  "selected_card" ${JSON.stringify(command)}`);
+      console.log(`<- "selected_card" ${JSON.stringify(command)}`);
       command.nextCard = deck.white(command.cards.length);
       io.emit("finish_round", command);
       game.finishRound(command);
     });
 
     socket.on("selected_winner", (command) => {
-      console.log(`<-  "selected_winner" ${JSON.stringify(command)}`);
+      console.log(`<- "selected_winner" ${JSON.stringify(command)}`);
       command.newRound = deck.black();
 
-      console.log(`->  "next_turn" ${JSON.stringify(command)}`);
+      console.log(`-> "next_turn" ${JSON.stringify(command)}`);
       io.emit("next_turn", command);
       game.setWinnerSetupNextTurn(command);
     });

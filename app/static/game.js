@@ -6,6 +6,7 @@ export default function createGame() {
     round: {},
     qtdPlayers: 0,
   };
+  const hand = {};
 
   // Set owner round
   function setOwnerRound(command) {
@@ -31,13 +32,13 @@ export default function createGame() {
     };
     state.qtdPlayers += 1;
     console.log(
-      `New client connected: "${name}(${id})", have ${qtdPlayers()} players.`
+      `= new client connected: "${name}(${id})", have ${qtdPlayers()} players.`
     );
   }
 
   // Set cards
   function setCardsHand(command) {
-    state.players[command.id].hand = command.cards;
+    hand[command.id] = command.cards;
   }
 
   // Remove the player
@@ -110,18 +111,23 @@ export default function createGame() {
     state.players[command.id].round.finished = true;
     state.players[command.id].round.cards = command.cards;
     state.players[command.id].round.nextCard = command.nextCard;
+    console.log(state.players);
   }
 
   // Buy card
   function buyCard(command) {
     const id = command.id;
     const cards = state.players[id].round.cards;
+    
+    if (hand[id] == undefined) {
+      return;
+    }
 
     for (const [i, card] of cards.entries()) {
       const index = positionCard({ id: id, card: card });
       const nextCard = state.players[id].round.nextCard[i];
       console.log(`Change ${index}("${card}") -> "${nextCard}"`);
-      state.players[id].hand[index] = nextCard;
+      hand[id][index] = nextCard;
     }
   }
 
@@ -140,13 +146,13 @@ export default function createGame() {
 
   // Get position of selected card
   function positionCard(command) {
-    return state.players[command.id].hand.indexOf(command.card);
+    return hand[command.id].indexOf(command.card);
   }
 
   // Get possible cards
   function getMyCards(id) {
     if (state.players[id] != undefined) {
-      return state.players[id].hand;
+      return hand[id];
     }
   }
 
