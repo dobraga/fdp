@@ -232,15 +232,16 @@ export default function createGame() {
     return state.round;
   }
 
-  function render(game, OwnerUsername) {
+  function render(OwnerUsername) {
     console.log(`= rendering page for ${OwnerUsername}`);
-    renderListPlayers(game, OwnerUsername);
-    renderCards(game, OwnerUsername);
+    renderListPlayers(this, OwnerUsername);
+    renderCards(this, OwnerUsername);
   }
 
   return {
     render,
     state,
+    hand,
     setState,
 
     addPlayer,

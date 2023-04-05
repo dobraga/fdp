@@ -1,16 +1,28 @@
 export default function session() {
   const mapping = {
     id: "id",
+    name: "name",
     cards: "cards",
   };
 
-  function connect() {
+  function getId() {
     const key = `card-game-${mapping.id}`;
     const value = localStorage.getItem(key);
     if (value == undefined) {
       const id = crypto.randomUUID();
       localStorage.setItem(key, id);
       return id;
+    }
+    return value;
+  }
+
+  function getName() {
+    const key = `card-game-${mapping.name}`;
+    const value = localStorage.getItem(key);
+    if (value == undefined) {
+      const username = prompt("Please enter your name");
+      localStorage.setItem(key, username);
+      return username;
     }
     return value;
   }
@@ -46,5 +58,5 @@ export default function session() {
   function getPoints() {}
   function storePoints() {}
 
-  return { connect, clear, getCards, storeCards, getPoints, storePoints };
+  return { getId, getName, clear, getCards, storeCards, getPoints, storePoints };
 }

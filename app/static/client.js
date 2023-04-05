@@ -9,25 +9,24 @@ let id = null;
 let username = null;
 
 socket.on("connect", () => {
-  id = ses.connect();
-  username = id;
-  // username = prompt("Please enter your name");
+  id = ses.getId();
+  username = ses.getName();
 
   console.log(`-> "new_user" "${username}"`);
   socket.emit("new_user", { id: id, username: username });
 
   const cards = ses.getCards();
+  game.setCardsHand({ id: id, cards: cards });
   console.log(`-> "set_cards" "${cards}"`);
   socket.emit("set_cards", { id: id, cards: cards });
+  game.render(id);
 });
 
 socket.on("set_cards", (command) => {
   console.log(`<- "set_cards" "${JSON.stringify(command)}"`);
   game.setCardsHand(command);
   ses.storeCards(game.getMyCards(id));
-  game.render(game, id);
 });
-
 
 socket.on("setup", (state) => {
   console.log(`<- setup: ${JSON.stringify(state)}`);
@@ -38,19 +37,19 @@ socket.on("new_user", (command) => {
   console.log(`<- "new_user" "${JSON.stringify(command)}"`);
   game.addPlayer(command);
   game.setOwnerRound(command);
-  game.render(game, id);
+  game.render(id);
 });
 
 socket.on("remove_user", (command) => {
   console.log(`<- "remove_user" "${JSON.stringify(command)}"`);
   game.removePlayer(command);
-  game.render(game, id);
+  game.render(id);
 });
 
 socket.on("finish_round", (command) => {
   console.log(`<- "finish_round" "${JSON.stringify(command)}"`);
   game.finishRound(command);
-  game.render(game, id);
+  game.render(id);
 });
 
 socket.on("next_turn", (command) => {
@@ -62,7 +61,7 @@ socket.on("next_turn", (command) => {
       command.answer
     }\n\n${command.cards}`
   );
-  game.render(game, id);
+  game.render(id);
 });
 
 // Select card
