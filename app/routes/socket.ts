@@ -1,42 +1,46 @@
 import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 import { Application } from "https://deno.land/x/oak@v11.1.0/mod.ts";
-import createGame from "../static/game.js";
-import createDeck from "../static/deck.ts";
+import createGame from "../static/utils/game.js";
+import createDeck from "../static/utils/deck.ts";
 
 const game = createGame();
 const deck = createDeck();
+let id = ""
 
 export default function createSocketListen(io: Server, app: Application) {
   io.on("connection", (socket: Socket) => {
-    let username = socket.id;
-
     socket.on("new_user", (command) => {
+      id = command.id
       console.log(`<- "new_user" "${JSON.stringify(command)}"`);
-      username = command.id;
 
       // If first player, then is the owner of first round.
       if (game.qtdPlayers() == 0) {
         command.round = {
           "card": deck.black(),
-          "player": username,
+          "player": command.id,
         };
         game.setOwnerRound(command);
       }
       io.emit("new_user", command);
       game.addPlayer(command);
+    });
 
-      // add user for server and client player
-      command.cards = deck.white(10);
-      socket.emit("set_cards", command);
-      game.setCardsHand(command);
+    socket.on("set_cards", (command) => {
+      console.log(`<- "set_cards" "${JSON.stringify(command)}"`);
+      if (command.cards.length == 0) {
+        command.cards = deck.white(10);
+
+        io.emit("set_cards", command);
+        game.setCardsHand(command);
+      }
     });
 
     socket.emit("setup", game.state);
 
     socket.on("disconnect", () => {
-      console.log(`<- "disconnect" "${username}"`);
-      io.emit("remove_user", { "id": username });
-      game.removePlayer({ "id": username });
+      console.log(`<- "disconnect" "${id}"`);
+      io.emit("remove_user", { "id": id });
+      game.removePlayer({ "id": id });
     });
 
     socket.on("selected_card", (command) => {
