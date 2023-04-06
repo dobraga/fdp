@@ -21,7 +21,7 @@ export default function session() {
     const value = localStorage.getItem(key);
     if (value == undefined) {
       let username = null
-      while (username == null || username == undefined || username == '') {
+      while (username == null || username == undefined || username == '' || username == 0) {
         username = prompt("Please enter your name").trim();
       }
       localStorage.setItem(key, username);
