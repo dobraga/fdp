@@ -20,7 +20,10 @@ export default function session() {
     const key = `card-game-${mapping.name}`;
     const value = localStorage.getItem(key);
     if (value == undefined) {
-      const username = prompt("Please enter your name");
+      let username = null
+      while (username == null || username == undefined || username == '') {
+        username = prompt("Please enter your name").trim();
+      }
       localStorage.setItem(key, username);
       return username;
     }
