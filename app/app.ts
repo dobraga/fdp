@@ -1,6 +1,6 @@
-import { Server } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
-import { Application } from "https://deno.land/x/oak@v11.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.173.0/http/server.ts";
+import { Server } from "socketio";
+import { Application } from "oak";
+import { serve } from "std";
 
 import router from "./routes/ws.ts";
 import createSocketListen from "./routes/socket.ts";

@@ -1,11 +1,18 @@
 import shuffle from "./shuffle.js";
 
+const null_state = {
+  players: {},
+  round: {
+    current: null,
+    card: null,
+    qtdSpaces: 0,
+  },
+};
+
 export default function createGame() {
-  const state = {
-    players: {},
-    round: {},
-  };
-  const hand = {};
+  let state = JSON.parse(JSON.stringify(null_state));
+  let hand = {};
+  let wins = {};
 
   // Set owner round
   function setOwnerRound(command) {
@@ -23,12 +30,12 @@ export default function createGame() {
 
     state.players[id] = {
       name: command.username,
-      wins: [],
       round: {
         finished: false,
         card: null,
       },
     };
+    wins[id] = [];
     console.log(
       `= new client connected: "${name}(${id})", have ${qtdPlayers()} players.`
     );
@@ -48,6 +55,13 @@ export default function createGame() {
       setNextOwnerPlayer();
     }
     delete state.players[id];
+
+    // If remove all player clean workspace
+    if (qtdPlayers() == 0) {
+      state = JSON.parse(JSON.stringify(null_state));
+      wins = {};
+      hand = {};
+    }
   }
 
   // Get list of players
@@ -108,7 +122,6 @@ export default function createGame() {
     state.players[command.id].round.finished = true;
     state.players[command.id].round.cards = command.cards;
     state.players[command.id].round.nextCard = command.nextCard;
-    console.log(state.players);
   }
 
   // Buy card
@@ -160,7 +173,7 @@ export default function createGame() {
 
   // # where the player wins
   function qtdWins(id) {
-    return state.players[id].wins.length;
+    return wins[id].length;
   }
 
   // Get next owner of turn
@@ -198,7 +211,7 @@ export default function createGame() {
   function setWinnerSetupNextTurn(command) {
     const winner = command.winner;
 
-    state.players[winner].wins = state.players[winner].wins.concat([
+    wins[winner] = wins[winner].concat([
       { cards: command.cards, answer: command.answer },
     ]);
 
@@ -242,6 +255,7 @@ export default function createGame() {
     render,
     state,
     hand,
+    wins,
     setState,
 
     addPlayer,

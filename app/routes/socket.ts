@@ -1,5 +1,5 @@
-import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
-import { Application } from "https://deno.land/x/oak@v11.1.0/mod.ts";
+import { Application } from "oak";
+import { Server, Socket } from "socketio";
 import createGame from "../static/utils/game.js";
 import createDeck from "../static/utils/deck.ts";
 

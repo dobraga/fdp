@@ -1,0 +1,8 @@
+{
+    "imports": {
+        "assert": "https://deno.land/std@0.176.0/testing/asserts.ts",
+        "socketio": "https://deno.land/x/socket_io@0.2.0/mod.ts",
+        "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
+        "std": "https://deno.land/std@0.173.0/http/server.ts"
+    }
+}
