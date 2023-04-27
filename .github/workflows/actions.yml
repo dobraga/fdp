@@ -33,5 +33,5 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: card-game
-          entrypoint: app/app.ts
+          entrypoint: app.ts
           import-map: import-map.json
