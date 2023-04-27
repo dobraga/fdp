@@ -3,5 +3,5 @@
         "start": "deno run -A --watch=app/ app/app.ts",
         "compile": "deno compile app/app.ts -A --output bin/game"
     },
-    "importMap": "./import_map.json"
+    "importMap": "./app/import_map.json"
 }
