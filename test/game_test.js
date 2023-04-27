@@ -1,4 +1,4 @@
-import { assertNotEquals } from "assert";
+import { assertNotEquals, assertEquals } from "assert";
 
 import createGame from "../app/static/utils/game.js";
 import createDeck from "../app/static/utils/deck.ts";
@@ -26,9 +26,11 @@ Deno.test("Setup game", () => {
   game.setOwnerRound(user1);
   game.addPlayer(user1);
   game.setCardsHand(user1);
+  assertEquals(game.hand[user1.id].length, 10);
 
   game.addPlayer(user2);
   game.setCardsHand(user2);
+  assertEquals(game.hand[user2.id].length, 10);
 });
 
 Deno.test("Select card and set winner", () => {
