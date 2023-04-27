@@ -19,13 +19,13 @@ socket.on("connect", () => {
   game.setCardsHand({ id: id, cards: cards });
   console.log(`-> "set_cards" "${cards}"`);
   socket.emit("set_cards", { id: id, cards: cards });
-  game.render(id);
 });
 
 socket.on("set_cards", (command) => {
   console.log(`<- "set_cards" "${JSON.stringify(command)}"`);
   game.setCardsHand(command);
   ses.storeCards(game.getMyCards(id));
+  game.render(id);
 });
 
 socket.on("setup", (state) => {
