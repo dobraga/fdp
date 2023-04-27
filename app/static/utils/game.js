@@ -173,7 +173,11 @@ export default function createGame() {
 
   // # where the player wins
   function qtdWins(id) {
-    return wins[id].length;
+    const w = wins[id];
+    if (w == undefined) {
+      return 0;
+    }
+    return w.length;
   }
 
   // Get next owner of turn
