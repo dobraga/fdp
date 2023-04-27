@@ -32,6 +32,6 @@ jobs:
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:
-          project: dobraga-card-game
+          project: fdp
           entrypoint: app.ts
           import-map: import_map.json
