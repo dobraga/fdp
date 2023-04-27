@@ -1,4 +1,4 @@
-import { assertNotEquals, assertThrows } from "assert";
+import { assertNotEquals } from "assert";
 
 import createGame from "../app/static/utils/game.js";
 import createDeck from "../app/static/utils/deck.ts";
@@ -50,9 +50,4 @@ Deno.test("Select card and set winner", () => {
   game.setWinnerSetupNextTurn(command_win)
 
   assertNotEquals(old_white_cards, JSON.stringify(game.hand[user2.id]))
-
-
-  console.log(game.state);
-  console.log(game.hand);
-  console.log(game.wins);
 });
