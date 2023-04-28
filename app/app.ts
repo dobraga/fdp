@@ -13,5 +13,5 @@ app.use(router.allowedMethods());
 const handler = createSocketListen(io, app)
 
 await serve(handler, {
-  port: 8080,
+  port: 80,
 });
