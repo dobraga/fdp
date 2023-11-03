@@ -9,6 +9,14 @@ router.get("/", async (ctx) => {
   });
 });
 
+router.get("/favicon.ico", async (ctx) => {
+  await send(ctx, "/favicon.ico", {
+    root: `${Deno.cwd()}/app/static/`,
+    index: "favicon.ico",
+  });
+});
+
+
 // Static content
 router.get("/static/:path+", async (ctx) => {
   await send(ctx, ctx.request.url.pathname, {
