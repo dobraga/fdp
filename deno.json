@@ -1,7 +1,7 @@
 {
     "tasks": {
-        "start": "deno run -A --watch=app/ app/app.ts",
-        "compile": "deno compile app/app.ts -A --output bin/game"
+        "start": "deno run -A --watch=app/ app.ts",
+        "compile": "deno compile app.ts -A --output bin/game"
     },
     "importMap": "./import_map.json"
 }
