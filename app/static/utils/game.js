@@ -10,9 +10,9 @@ const nullState = {
 };
 
 export default function createGame() {
-  let state = JSON.parse(JSON.stringify(nullState));
-  let hand = {};
-  let wins = {};
+  const state = JSON.parse(JSON.stringify(nullState));
+  const hand = {};
+  const wins = {};
 
   /** @param {SetOwnerRoundCommand} command */
   function setOwnerRound(command) {
