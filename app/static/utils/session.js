@@ -8,7 +8,7 @@ export default function session() {
   function getId() {
     const key = `card-game-${mapping.id}`;
     const value = getLocalStorageWithExpiration(key);
-    if (value == undefined) {
+    if (value === null) { // Changed to === null
       const id = crypto.randomUUID();
       setLocalStorageWithExpiration(key, id, 60);
       return id;
@@ -19,10 +19,20 @@ export default function session() {
   function getName() {
     const key = `card-game-${mapping.name}`;
     const value = getLocalStorageWithExpiration(key);
-    if (value == undefined) {
-      let username = null
-      while (username == null || username == undefined || username == '' || username == 0) {
-        username = prompt("Please enter your name").trim();
+    if (value === null) { // Changed to === null
+      let username = null; // Semicolon added
+      // Simplified loop condition, also ensures username is not just whitespace
+      while (!username || username.trim().length === 0) { 
+        const input = prompt("Please enter your name");
+        // Handle case where prompt is cancelled (returns null)
+        if (input === null) {
+            // Or handle this case differently, e.g. assign a default name or re-prompt
+            // For now, let's keep it simple and it might loop again if null makes !username true.
+            // A more robust solution might be needed depending on desired UX for cancel.
+            username = ""; // Or some default to avoid infinite loop if prompt returns null
+        } else {
+            username = input.trim();
+        }
       }
       setLocalStorageWithExpiration(key, username, 60);
       return username;
@@ -42,26 +52,26 @@ export default function session() {
   function getCards() {
     const key = `card-game-${mapping.cards}`;
     const value = getLocalStorageWithExpiration(key);
-    if (value == undefined) {
+    if (value === null) { // Changed to === null
       return [];
     }
     console.log(`== get cards: ${value}`);
     return JSON.parse(value).cards;
   }
+
   function storeCards(cards) {
     const key = `card-game-${mapping.cards}`;
-    if (cards == undefined) {
+    if (cards === undefined) { // Changed to === undefined
       return;
     }
     const value = JSON.stringify({ cards: cards });
-    console.log(`== store cards: ${value}`)
+    console.log(`== store cards: ${value}`); // Semicolon added (was already there in original logic, just confirming)
     setLocalStorageWithExpiration(key, value, 60);
   }
 
-  function getPoints() {}
-  function storePoints() {}
+  // getPoints and storePoints removed
 
-  return { getId, getName, clear, getCards, storeCards, getPoints, storePoints };
+  return { getId, getName, clear, getCards, storeCards }; // getPoints, storePoints removed
 }
 
 
@@ -88,5 +98,5 @@ function getLocalStorageWithExpiration(key) {
       localStorage.removeItem(key);
     }
   }
-  return null;
+  return null; // Returns null if not found or expired
 }

@@ -1,6 +1,6 @@
 import shuffle from "./shuffle.js";
 
-const null_state = {
+const nullState = { 
   players: {},
   round: {
     current: null,
@@ -9,12 +9,57 @@ const null_state = {
   },
 };
 
+/**
+ * @typedef {Object} RoundCardInfo
+ * @property {string} card - The text of the black card.
+ * @property {number} qtdSpaces - The number of white cards to be played for this black card.
+ */
+
+/**
+ * @typedef {Object} RoundInfoForCommand
+ * @property {string} player - The ID of the player who is the current round owner.
+ * @property {RoundCardInfo} card - The black card for the round.
+ */
+
+/**
+ * @typedef {Object} SetOwnerRoundCommand
+ * @property {RoundInfoForCommand} round
+ */
+
+/**
+ * @typedef {Object} PlayerCommand
+ * @property {string} id - Player ID.
+ * @property {string} [username] - Player username (optional for some commands like removePlayer).
+ * @property {string[]} [cards] - Array of card strings (optional depending on command).
+ */
+
+/**
+ * @typedef {Object} FinishRoundCommand
+ * @property {string} id - Player ID.
+ * @property {string[]} cards - Played cards.
+ */
+
+/**
+ * @typedef {Object} PositionCardCommand
+ * @property {string} id - Player ID.
+ * @property {string} card - Card string to find position of.
+ */
+
+/**
+ * @typedef {Object} SetWinnerCommand
+ * @property {string} winner - ID of the player who won the round.
+ * @property {string[]} cards - The winning white card(s).
+ * @property {string} answer - The black card text for the round.
+ * @property {RoundCardInfo} newRound - The new black card for the next round.
+ */
+
+
 export default function createGame() {
-  let state = JSON.parse(JSON.stringify(null_state));
+  let state = JSON.parse(JSON.stringify(nullState)); 
   let hand = {};
   let wins = {};
 
-  // Set owner round
+  /** @param {SetOwnerRoundCommand} command */
   function setOwnerRound(command) {
     if (command.round) {
       state.round.current = command.round.player;
@@ -23,7 +68,7 @@ export default function createGame() {
     }
   }
 
-  // Add a player
+  /** @param {PlayerCommand} command */
   function addPlayer(command) {
     const id = command.id;
     const name = command.username;
@@ -41,12 +86,15 @@ export default function createGame() {
     );
   }
 
-  // Set cards
+  /** @param {PlayerCommand} command */
   function setCardsHand(command) {
     hand[command.id] = command.cards;
   }
 
-  // Add cards to a player's hand (used by server for replenishment)
+  /**
+   * @param {string} playerId
+   * @param {string[]} newCardsArray
+   */
   function addCardsToHand(playerId, newCardsArray) {
     if (!hand[playerId]) {
       hand[playerId] = [];
@@ -54,42 +102,39 @@ export default function createGame() {
     hand[playerId].push(...newCardsArray);
   }
 
-  // Remove the player
+  /** @param {PlayerCommand} command */
   function removePlayer(command) {
     const id = command.id;
     console.log(`Client ${id} disconnected`);
 
-    const wasOwner = yourTurn(id); // Check if the player was the owner *before* removing them
+    const wasOwner = yourTurn(id); 
 
-    delete state.players[id]; // Delete player first
-    delete hand[id]; // Also remove their hand data
-    delete wins[id]; // And their win record
+    delete state.players[id]; 
+    delete hand[id]; 
+    delete wins[id]; 
 
     if (wasOwner && qtdPlayers() > 0) {
       console.log("Disconnected player was owner, setting next owner.");
       setNextOwnerPlayer();
     }
 
-    // If remove all player clean workspace
-    if (qtdPlayers() == 0) {
+    if (qtdPlayers() === 0) { 
       console.log("All players disconnected, resetting game state.");
-      state = JSON.parse(JSON.stringify(null_state));
-      wins = {}; // Ensure wins is also reset
-      hand = {}; // Ensure hand is also reset
+      state = JSON.parse(JSON.stringify(nullState)); 
+      wins = {}; 
+      hand = {}; 
     }
   }
 
-  // Get list of players
   function getPlayers() {
     return Object.keys(state.players);
   }
 
-  // Set state on setup
+  /** @param {object} newState */ // Using generic object for newState due to its potential complexity
   function setState(newState) {
     Object.assign(state, newState);
   }
 
-  // Check if all players finished
   function allPlayersFinished() {
     let finished = true;
     for (const check_id of getPlayers()) {
@@ -100,11 +145,11 @@ export default function createGame() {
     return finished;
   }
 
-  // Check is blocked
+  /** @param {string} id */
   function isBlocked(id) {
     let check;
     if (yourTurn(id)) {
-      if (qtdPlayers() == 1) {
+      if (qtdPlayers() === 1) { 
         check = true;
       } else {
         check = !allPlayersFinished();
@@ -116,40 +161,36 @@ export default function createGame() {
     return check;
   }
 
-  // Check if is your turn
+  /** @param {string} id */
   function yourTurn(id) {
-    if (state.players[id] != undefined) {
-      return state.round.current == id;
+    if (state.players[id] !== undefined) { 
+      return state.round.current === id; 
     }
     return false;
   }
 
-  // Check if the user finish the round
+  /** @param {string} id */
   function youFinished(id) {
-    if (state.players[id] != undefined) {
+    if (state.players[id] !== undefined) { 
       return state.players[id].round.finished;
     }
     return false;
   }
 
-  // Finish round and prepare next round
-  function finishRound(command) { // command expected to have id and cards (played cards)
+  /** @param {FinishRoundCommand} command */
+  function finishRound(command) { 
     if (state.players[command.id] && state.players[command.id].round) {
       state.players[command.id].round.finished = true;
       state.players[command.id].round.cards = command.cards;
-      // Remove nextCard logic: state.players[command.id].round.nextCard = command.nextCard;
     } else {
       console.error("Player or player round not found in finishRound:", command.id);
     }
   }
 
-  // buyCard function is removed as replenishment is now server-side.
-
-  // Get selected cards
   function getSelectedCards() {
     const selectedCards = {};
     for (const id of shuffle(getPlayers())) {
-      if (state.players[id].round.cards != undefined) {
+      if (state.players[id].round.cards !== undefined) { 
         selectedCards[id] = state.players[id].round.cards;
       } else {
         selectedCards[id] = "espera os doentes escolherem as cartas";
@@ -158,33 +199,32 @@ export default function createGame() {
     return selectedCards;
   }
 
-  // Get position of selected card
+  /** @param {PositionCardCommand} command */
   function positionCard(command) {
     return hand[command.id].indexOf(command.card);
   }
 
-  // Get possible cards
+  /** @param {string} id */
   function getMyCards(id) {
-    if (state.players[id] != undefined) {
+    if (state.players[id] !== undefined) { 
       return hand[id];
     }
+    return undefined; 
   }
 
-  // # players
   function qtdPlayers() {
     return Object.keys(state.players).length;
   }
 
-  // # where the player wins
+  /** @param {string} id */
   function qtdWins(id) {
     const w = wins[id];
-    if (w == undefined) {
+    if (w === undefined) { 
       return 0;
     }
     return w.length;
   }
 
-  // Get next owner of turn
   function getNextOwnerPlayer() {
     const players = getPlayers();
     const currentPosition = players.indexOf(state.round.current);
@@ -208,7 +248,6 @@ export default function createGame() {
     }
 
     const players = getPlayers();
-    // If players list becomes empty unexpectedly (should be caught by above)
     if (players.length === 0) {
         state.round.current = null;
         console.log("setNextOwnerPlayer: Players list is empty, current owner set to null.");
@@ -216,13 +255,12 @@ export default function createGame() {
     }
     
     let currentPosition = players.indexOf(state.round.current);
-    // If current owner not found or only one player left, new owner is the first player
     if (currentPosition === -1 || players.length === 1) {
-        currentPosition = -1; // Will make newPosition 0
+        currentPosition = -1; 
     }
 
     let newPosition = currentPosition + 1;
-    if (newPosition >= players.length) { // Use players.length instead of qtdPlayers() for consistency with current list
+    if (newPosition >= players.length) { 
       newPosition = 0;
     }
 
@@ -233,7 +271,7 @@ export default function createGame() {
     state.round.current = newPlayerTurn;
   }
 
-  // Set winner and setup the next round
+  /** @param {SetWinnerCommand} command */
   function setWinnerSetupNextTurn(command) {
     const winner = command.winner;
 
@@ -241,13 +279,11 @@ export default function createGame() {
       { cards: command.cards, answer: command.answer },
     ]);
 
-    // Reset round status for all players
     for (const pId of getPlayers()) {
-      if (state.players[pId]) { // Check if player exists
+      if (state.players[pId]) { 
         state.players[pId].round = { finished: false, cards: null };
       }
     }
-    // The buyCard loop is removed. Card replenishment will be handled in socket.ts
 
     const commandNextTurn = {
       round: {
@@ -261,38 +297,33 @@ export default function createGame() {
     setOwnerRound(commandNextTurn);
   }
 
-  // Get player name
+  /** @param {string} id */
   function getPlayerName(id) {
-    return state.players[id].name;
+    if (state.players[id]) {
+      return state.players[id].name;
+    }
+    return "Unknown Player"; 
   }
 
-  // Get current round
   function getRound() {
     return state.round;
   }
 
-  // render function removed, will be handled by renderer.js
-
   return {
-    // render, // Removed
     state,
     hand,
     wins,
     setState,
-
     addPlayer,
     removePlayer,
-
     getPlayerName,
     getRound,
     setOwnerRound,
     getPlayers,
-
     isBlocked,
     finishRound,
     yourTurn,
     youFinished,
-
     getSelectedCards,
     setCardsHand,
     getMyCards,
@@ -300,8 +331,6 @@ export default function createGame() {
     allPlayersFinished,
     setWinnerSetupNextTurn,
     qtdWins,
-    addCardsToHand, // Expose new function
+    addCardsToHand,
   };
 }
-
-// renderListPlayers, renderCards, and addEventListenerCards functions removed, they are now in renderer.js

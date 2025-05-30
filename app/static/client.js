@@ -3,7 +3,8 @@ import session from "./utils/session.js";
 import { render } from "./utils/renderer.js";
 
 const game = createGame();
-const socket = io();
+/** @type {import("socketio-client").Socket} */
+const socket = io(); // It's good practice to type socket if possible, though io() is global here.
 const ses = session();
 
 let id = null;
@@ -23,35 +24,38 @@ socket.on("connect", () => {
     socket.emit("set_cards", { id: id, cards: cards });
   } catch (error) {
     console.error("Error during socket connect:", error);
-    // UI feedback: Could show a general connection error message.
   }
 });
 
-socket.on("set_cards_response", (command) => {
+/**
+ * @typedef {Object} SetCardsResponseCommand
+ * @property {string} id
+ * @property {string[]} new_cards
+ * @property {string[]} played_cards
+ */
+socket.on("set_cards_response", (/** @type {SetCardsResponseCommand} */ command) => {
   try {
     console.log(`<- "set_cards_response" "${JSON.stringify(command)}"`);
     if (command.id !== id) {
-      // This message is not for me
       return;
     }
 
     let currentHand = game.getMyCards(id);
     if (!currentHand) {
       console.error("Current hand not found for player:", id);
-      currentHand = []; // Start with an empty hand if none exists
+      currentHand = [];
     }
-    let mutableHand = [...currentHand]; // Create a mutable copy
+    let mutableHand = [...currentHand]; 
 
-    const newCards = [...command.new_cards]; // Copy to allow consuming them
+    const newCards = [...command.new_cards]; 
     const playedCards = command.played_cards;
 
     for (const playedCard of playedCards) {
       const indexInHand = mutableHand.indexOf(playedCard);
       if (indexInHand !== -1) {
         if (newCards.length > 0) {
-          mutableHand[indexInHand] = newCards.shift(); // Replace with a new card
+          mutableHand[indexInHand] = newCards.shift(); 
         } else {
-          // Not enough new cards, remove the played card (or handle as error)
           mutableHand.splice(indexInHand, 1);
           console.warn("Not enough new cards to replace all played cards. Some cards removed.");
         }
@@ -60,30 +64,28 @@ socket.on("set_cards_response", (command) => {
       }
     }
     
-    // If there are still new cards left and hand size is less than a limit (e.g. 10), add them.
-    // This part is optional and depends on game rules (e.g. always draw up to 10).
-    // For now, just direct replacement.
-
     game.setCardsHand({ id: id, cards: mutableHand });
-    ses.storeCards(game.getMyCards(id)); // Store the updated hand
+    ses.storeCards(game.getMyCards(id)); 
     render(game.state, { id: id, username: username }, document, game);
 
   } catch (error) {
     console.error("Error in 'set_cards_response' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to card update.
     swal("Erro ao atualizar suas cartas. Tente recarregar a página.");
   }
 });
 
-socket.on("deal_cards", (command) => {
+/**
+ * @typedef {Object} DealCardsCommand
+ * @property {string[]} cards
+ */
+socket.on("deal_cards", (/** @type {DealCardsCommand} */ command) => {
   try {
     console.log(`<- "deal_cards" "${JSON.stringify(command)}"`);
-    // Assuming 'id' is the current client's id
     const currentCards = game.getMyCards(id) || [];
     const updatedHand = currentCards.concat(command.cards);
     
     game.setCardsHand({ id: id, cards: updatedHand });
-    ses.storeCards(game.getMyCards(id)); // Store the updated hand
+    ses.storeCards(game.getMyCards(id)); 
     render(game.state, { id: id, username: username }, document, game);
 
   } catch (error) {
@@ -92,7 +94,12 @@ socket.on("deal_cards", (command) => {
   }
 });
 
-socket.on("set_cards", (command) => {
+/**
+ * @typedef {Object} SetCardsCommand
+ * @property {string} id
+ * @property {string[]} cards
+ */
+socket.on("set_cards", (/** @type {SetCardsCommand} */ command) => {
   try {
     console.log(`<- "set_cards" "${JSON.stringify(command)}"`);
     game.setCardsHand(command);
@@ -100,21 +107,30 @@ socket.on("set_cards", (command) => {
     render(game.state, { id: id, username: username }, document, game);
   } catch (error) {
     console.error("Error in 'set_cards' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to card update.
   }
 });
 
-socket.on("setup", (state) => {
+// For game.state, the structure is complex. Using Object for now.
+socket.on("setup", (/** @type {Object} */ state) => { // TODO: Define a more specific type for game state
   try {
     console.log(`<- setup: ${JSON.stringify(state)}`);
     game.setState(state);
   } catch (error) {
     console.error("Error in 'setup' event handler:", error, "State:", state);
-    // UI feedback: Could show an error related to game setup.
   }
 });
 
-socket.on("new_user", (command) => {
+/**
+ * @typedef {Object} RoundInfo
+ * @property {{card: string, qtdSpaces: number}} card
+ * @property {string} player
+ *
+ * @typedef {Object} NewUserCommand
+ * @property {string} id
+ * @property {string} username
+ * @property {RoundInfo} [round]
+ */
+socket.on("new_user", (/** @type {NewUserCommand} */ command) => {
   try {
     console.log(`<- "new_user" "${JSON.stringify(command)}"`);
     game.addPlayer(command);
@@ -122,33 +138,47 @@ socket.on("new_user", (command) => {
     render(game.state, { id: id, username: username }, document, game);
   } catch (error) {
     console.error("Error in 'new_user' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to new user joining.
   }
 });
 
-socket.on("remove_user", (command) => {
+/**
+ * @typedef {Object} RemoveUserCommand
+ * @property {string} id
+ */
+socket.on("remove_user", (/** @type {RemoveUserCommand} */ command) => {
   try {
     console.log(`<- "remove_user" "${JSON.stringify(command)}"`);
     game.removePlayer(command);
     render(game.state, { id: id, username: username }, document, game);
   } catch (error) {
     console.error("Error in 'remove_user' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to user leaving.
   }
 });
 
-socket.on("finish_round", (command) => {
+/**
+ * @typedef {Object} FinishRoundCommand
+ * @property {string} id
+ * @property {string[]} cards
+ */
+socket.on("finish_round", (/** @type {FinishRoundCommand} */ command) => {
   try {
     console.log(`<- "finish_round" "${JSON.stringify(command)}"`);
-    game.finishRound(command);
+    game.finishRound(command); // game.finishRound was updated to expect {id, cards}
     render(game.state, { id: id, username: username }, document, game);
   } catch (error) {
     console.error("Error in 'finish_round' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to round finishing.
   }
 });
 
-socket.on("next_turn", (command) => {
+/**
+ * @typedef {Object} NextTurnCommand
+ * @property {string} winner
+ * @property {string[]} cards - winning cards
+ * @property {string} answer - black card text
+ * @property {RoundInfo} newRound
+ * @property {string} [id] - judge's id, often part of command from server
+ */
+socket.on("next_turn", (/** @type {NextTurnCommand} */ command) => {
   try {
     console.log(`<- "next_turn" "${JSON.stringify(command)}"`);
     game.setWinnerSetupNextTurn(command);
@@ -156,12 +186,11 @@ socket.on("next_turn", (command) => {
     swal(
       `O vencedor foi ${game.getPlayerName(command.winner)}\n\n${
         command.answer
-      }\n\n${command.cards}`
+      }\n\n${command.cards.join(", ")}` // Ensure cards are nicely formatted
     );
     render(game.state, { id: id, username: username }, document, game);
   } catch (error) {
     console.error("Error in 'next_turn' event handler:", error, "Command:", command);
-    // UI feedback: Could show an error related to next turn.
   }
 });
 
@@ -177,9 +206,9 @@ function cardSelected(game) {
     const round = game.getRound();
 
     const cards = Array.from(elCards).map((elem) => elem.innerHTML);
-    const command = { id: id, cards: cards };
+    const command = { id: id, cards: cards }; 
     if (game.yourTurn(id)) {
-      if (elCards.length != 1) {
+      if (elCards.length !== 1) { // Use !==
         swal("Selecione uma carta como vencedora, jumento.");
         return;
       }
@@ -189,7 +218,7 @@ function cardSelected(game) {
       console.log(`-> "selected_winner" "${JSON.stringify(command)}"`);
       socket.emit("selected_winner", command);
     } else {
-      if (elCards.length != round.qtdSpaces) {
+      if (elCards.length !== round.qtdSpaces) { // Use !==
         swal(`Selecione ${round.qtdSpaces} carta(s), jumento.`);
         return;
       }
@@ -199,7 +228,7 @@ function cardSelected(game) {
     }
   } catch (error) {
     console.error("Error in cardSelected function:", error);
-    swal("Ocorreu um erro ao selecionar o card. Tente novamente."); // User feedback
+    swal("Ocorreu um erro ao selecionar o card. Tente novamente.");
   }
 }
 
@@ -208,17 +237,15 @@ document.getElementById("finish").addEventListener("click", () => {
     cardSelected(game);
   } catch (error) {
     console.error("Error in 'finish' button click listener:", error);
-    swal("Ocorreu um erro. Tente novamente."); // User feedback
+    swal("Ocorreu um erro. Tente novamente.");
   }
 });
 
 document.getElementById("disconnect").addEventListener("click", () => {
   try {
     ses.clear();
-    // UI feedback: Optionally confirm logout or redirect.
     swal("Você foi desconectado.");
   } catch (error) {
     console.error("Error in 'disconnect' button click listener:", error);
-    // UI feedback: Could show a generic error message.
   }
 });

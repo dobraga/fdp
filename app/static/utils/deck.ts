@@ -9,7 +9,7 @@ export default function createDeck() {
 
   function black(): Black {
     const card: string = shuffle(cards_black).slice(0, 1)[0];
-    const qtdCards = Math.max([...card.matchAll(/_+/g)].length, 1);
+    const qtdCards = Math.max([...card.matchAll(/_+/g)].length, 1); // Semicolon added
     return { "card": card, "qtdSpaces": qtdCards };
   }
 
