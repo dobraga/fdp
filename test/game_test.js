@@ -1,7 +1,10 @@
-import { assertEquals, assert, assertExists } from "jsr:@std/assert";
+import {
+  assertEquals,
+  assertExists,
+  assertFalse,
+} from "jsr:@std/assert";
 
 import createGame from "../app/static/utils/game.js";
-// import createDeck from "../app/static/utils/deck.ts"; // Not strictly needed for most game logic tests
 
 // Re-define null_state for comparison as it's not exported from game.js
 const NULL_STATE = {
@@ -189,7 +192,7 @@ Deno.test("Round and Turn Management", async (t) => {
       round: { player: p1.id, card: { card: "BC", qtdSpaces: 1 } },
     });
 
-    assertTrue(game.yourTurn(p1.id), "Should be p1's turn");
+    assertFalse(!game.yourTurn(p1.id), "Should be p1's turn");
     assertFalse(game.yourTurn(p2.id), "Should not be p2's turn");
   });
 
@@ -208,56 +211,130 @@ Deno.test("Round and Turn Management", async (t) => {
     assertEquals(game.qtdPlayers(), 2, "Should be 2 after adding players");
   });
 
-  await t.step("setNextOwnerPlayer", () => {
-    const game = createGame();
-    const p1 = { id: "p1", username: "P1" };
-    const p2 = { id: "p2", username: "P2" };
-    const p3 = { id: "p3", username: "P3" };
+  // Removed direct test for setNextOwnerPlayer as it's an internal function.
+  // Testing its behavior indirectly via removePlayer and setWinnerSetupNextTurn.
 
-    // Test with 0 players
-    game.setNextOwnerPlayer(); // Internal call via removePlayer or setWinner
-    assertEquals(
-      game.getRound().current,
-      null,
-      "Owner should be null with 0 players"
-    );
+  await t.step(
+    "setNextOwnerPlayer behavior - owner removed, 3 players (p1 -> p2)",
+    () => {
+      const game = createGame();
+      const p1 = { id: "p1", username: "P1" };
+      const p2 = { id: "p2", username: "P2" };
+      const p3 = { id: "p3", username: "P3" };
+      game.addPlayer(p1);
+      game.addPlayer(p2);
+      game.addPlayer(p3);
+      game.setOwnerRound({
+        round: { player: p1.id, card: { card: "BC", qtdSpaces: 1 } },
+      });
 
-    game.addPlayer(p1);
-    // Test with 1 player
-    game.setOwnerRound({
-      round: { player: p1.id, card: { card: "Q", qtdSpaces: 1 } },
-    });
-    game.setNextOwnerPlayer(); // Should remain p1 (or effectively so)
-    assertEquals(
-      game.getRound().current,
-      p1.id,
-      "Owner should be p1 with 1 player"
-    );
+      game.removePlayer({ id: p1.id }); // p1 (owner) removed
+      assertEquals(game.getRound().current, p2.id, "Owner should cycle to p2");
+    }
+  );
 
-    game.addPlayer(p2);
-    game.addPlayer(p3);
-    // p1 is current owner
-    game.setOwnerRound({
-      round: { player: p1.id, card: { card: "Q", qtdSpaces: 1 } },
-    });
+  await t.step(
+    "setNextOwnerPlayer behavior - owner removed, 2 players (p2 -> p1 after p2 removed)",
+    () => {
+      const game = createGame();
+      const p1 = { id: "p1", username: "P1" };
+      const p2 = { id: "p2", username: "P2" };
+      game.addPlayer(p1);
+      game.addPlayer(p2);
+      game.setOwnerRound({
+        round: { player: p2.id, card: { card: "BC", qtdSpaces: 1 } },
+      });
 
-    // Manually call the internal setNextOwnerPlayer (game normally calls this itself)
-    // To test its direct logic, we might need to expose it or test through removePlayer/setWinner.
-    // For now, let's simulate the call if it were exposed or rely on setWinnerSetupNextTurn to call it.
-    // Assuming direct call for unit test purpose:
-    game.setNextOwnerPlayer(); // p1 -> p2
-    assertEquals(game.getRound().current, p2.id, "Owner should cycle to p2");
+      game.removePlayer({ id: p2.id }); // p2 (owner) removed
+      assertEquals(
+        game.getRound().current,
+        p1.id,
+        "Owner should be p1 (the only one left)"
+      );
+    }
+  );
 
-    game.setNextOwnerPlayer(); // p2 -> p3
-    assertEquals(game.getRound().current, p3.id, "Owner should cycle to p3");
+  await t.step(
+    "setNextOwnerPlayer behavior - after round win, 3 players (p1 judge, p2 wins -> p2 new judge)",
+    () => {
+      const game = createGame();
+      const p1 = { id: "p1", username: "P1" }; // Initial Judge
+      const p2 = { id: "p2", username: "P2" };
+      const p3 = { id: "p3", username: "P3" };
+      game.addPlayer(p1);
+      game.addPlayer(p2);
+      game.addPlayer(p3);
+      game.setOwnerRound({
+        round: { player: p1.id, card: { card: "Black Card 1", qtdSpaces: 1 } },
+      });
+      // Simulate p2 playing a card (needed for wins array)
+      game.finishRound({ id: p2.id, cards: ["p2_card"] });
 
-    game.setNextOwnerPlayer(); // p3 -> p1 (wrap-around)
-    assertEquals(
-      game.getRound().current,
-      p1.id,
-      "Owner should wrap around to p1"
-    );
-  });
+      // p2 wins the round judged by p1
+      game.setWinnerSetupNextTurn({
+        winner: p2.id,
+        cards: ["p2_card"],
+        answer: "Black Card 1",
+        newRound: { card: "Black Card 2", qtdSpaces: 1 },
+      });
+      // getNextOwnerPlayer is called from p1 (previous owner), so it should return p2.
+      assertEquals(game.getRound().current, p2.id, "New judge should be p2");
+    }
+  );
+
+  await t.step(
+    "setNextOwnerPlayer behavior - after round win, 3 players (p2 judge, p3 wins -> p3 new judge)",
+    () => {
+      const game = createGame();
+      const p1 = { id: "p1", username: "P1" };
+      const p2 = { id: "p2", username: "P2" }; // Initial Judge
+      const p3 = { id: "p3", username: "P3" };
+      game.addPlayer(p1);
+      game.addPlayer(p2);
+      game.addPlayer(p3);
+      game.setOwnerRound({
+        round: { player: p2.id, card: { card: "Black Card 1", qtdSpaces: 1 } },
+      });
+      game.finishRound({ id: p3.id, cards: ["p3_card"] });
+
+      game.setWinnerSetupNextTurn({
+        winner: p3.id,
+        cards: ["p3_card"],
+        answer: "Black Card 1",
+        newRound: { card: "Black Card 2", qtdSpaces: 1 },
+      });
+      assertEquals(game.getRound().current, p3.id, "New judge should be p3");
+    }
+  );
+
+  await t.step(
+    "setNextOwnerPlayer behavior - after round win, 3 players (p3 judge, p1 wins -> p1 new judge, wrap around)",
+    () => {
+      const game = createGame();
+      const p1 = { id: "p1", username: "P1" };
+      const p2 = { id: "p2", username: "P2" };
+      const p3 = { id: "p3", username: "P3" }; // Initial Judge
+      game.addPlayer(p1);
+      game.addPlayer(p2);
+      game.addPlayer(p3);
+      game.setOwnerRound({
+        round: { player: p3.id, card: { card: "Black Card 1", qtdSpaces: 1 } },
+      });
+      game.finishRound({ id: p1.id, cards: ["p1_card"] });
+
+      game.setWinnerSetupNextTurn({
+        winner: p1.id,
+        cards: ["p1_card"],
+        answer: "Black Card 1",
+        newRound: { card: "Black Card 2", qtdSpaces: 1 },
+      });
+      assertEquals(
+        game.getRound().current,
+        p1.id,
+        "New judge should be p1 (wrap around)"
+      );
+    }
+  );
 });
 
 Deno.test("Game State & Actions", async (t) => {
@@ -268,8 +345,8 @@ Deno.test("Game State & Actions", async (t) => {
     const playedCards = ["white_card1", "white_card2"];
     game.finishRound({ id: p1.id, cards: playedCards });
 
-    assertTrue(
-      game.state.players[p1.id].round.finished,
+    assertFalse(
+      !game.state.players[p1.id].round.finished,
       "Player's round should be marked finished"
     );
     assertEquals(
@@ -313,14 +390,14 @@ Deno.test("Game State & Actions", async (t) => {
     );
 
     // Check round reset for all players
-    assertTrue(
-      game.state.players[p1.id].round.finished === false &&
-        game.state.players[p1.id].round.cards === null,
+    assertFalse(
+      !(game.state.players[p1.id].round.finished === false &&
+        game.state.players[p1.id].round.cards === null),
       "p1 round state should be reset"
     );
-    assertTrue(
-      game.state.players[p2.id].round.finished === false &&
-        game.state.players[p2.id].round.cards === null,
+    assertFalse(
+      !(game.state.players[p2.id].round.finished === false &&
+        game.state.players[p2.id].round.cards === null),
       "p2 round state should be reset"
     );
 

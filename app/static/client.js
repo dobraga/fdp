@@ -3,8 +3,7 @@ import session from "./utils/session.js";
 import { render } from "./utils/renderer.js";
 
 const game = createGame();
-/** @type {import("socketio-client").Socket} */
-const socket = io(); // It's good practice to type socket if possible, though io() is global here.
+const socket = io();
 const ses = session();
 
 let id = null;

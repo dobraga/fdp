@@ -1,6 +1,6 @@
 import shuffle from "./shuffle.js";
 
-const nullState = { 
+const nullState = {
   players: {},
   round: {
     current: null,
@@ -9,53 +9,8 @@ const nullState = {
   },
 };
 
-/**
- * @typedef {Object} RoundCardInfo
- * @property {string} card - The text of the black card.
- * @property {number} qtdSpaces - The number of white cards to be played for this black card.
- */
-
-/**
- * @typedef {Object} RoundInfoForCommand
- * @property {string} player - The ID of the player who is the current round owner.
- * @property {RoundCardInfo} card - The black card for the round.
- */
-
-/**
- * @typedef {Object} SetOwnerRoundCommand
- * @property {RoundInfoForCommand} round
- */
-
-/**
- * @typedef {Object} PlayerCommand
- * @property {string} id - Player ID.
- * @property {string} [username] - Player username (optional for some commands like removePlayer).
- * @property {string[]} [cards] - Array of card strings (optional depending on command).
- */
-
-/**
- * @typedef {Object} FinishRoundCommand
- * @property {string} id - Player ID.
- * @property {string[]} cards - Played cards.
- */
-
-/**
- * @typedef {Object} PositionCardCommand
- * @property {string} id - Player ID.
- * @property {string} card - Card string to find position of.
- */
-
-/**
- * @typedef {Object} SetWinnerCommand
- * @property {string} winner - ID of the player who won the round.
- * @property {string[]} cards - The winning white card(s).
- * @property {string} answer - The black card text for the round.
- * @property {RoundCardInfo} newRound - The new black card for the next round.
- */
-
-
 export default function createGame() {
-  let state = JSON.parse(JSON.stringify(nullState)); 
+  let state = JSON.parse(JSON.stringify(nullState));
   let hand = {};
   let wins = {};
 
@@ -107,22 +62,26 @@ export default function createGame() {
     const id = command.id;
     console.log(`Client ${id} disconnected`);
 
-    const wasOwner = yourTurn(id); 
+    const wasOwner = yourTurn(id);
 
-    delete state.players[id]; 
-    delete hand[id]; 
-    delete wins[id]; 
+    delete state.players[id];
+    delete hand[id];
+    delete wins[id];
 
     if (wasOwner && qtdPlayers() > 0) {
       console.log("Disconnected player was owner, setting next owner.");
       setNextOwnerPlayer();
     }
 
-    if (qtdPlayers() === 0) { 
-      console.log("All players disconnected, resetting game state.");
-      state = JSON.parse(JSON.stringify(nullState)); 
-      wins = {}; 
-      hand = {}; 
+    if (qtdPlayers() === 0) {
+      console.log(
+        "All players disconnected, resetting game state by modifying existing state object."
+      );
+      // Modify properties of the existing state object directly
+      state.round.current = null;
+      state.round.card = null;
+      state.round.qtdSpaces = 0;
+      state.players = {}; // Clear players from the state object
     }
   }
 
@@ -149,7 +108,7 @@ export default function createGame() {
   function isBlocked(id) {
     let check;
     if (yourTurn(id)) {
-      if (qtdPlayers() === 1) { 
+      if (qtdPlayers() === 1) {
         check = true;
       } else {
         check = !allPlayersFinished();
@@ -163,34 +122,37 @@ export default function createGame() {
 
   /** @param {string} id */
   function yourTurn(id) {
-    if (state.players[id] !== undefined) { 
-      return state.round.current === id; 
+    if (state.players[id] !== undefined) {
+      return state.round.current === id;
     }
     return false;
   }
 
   /** @param {string} id */
   function youFinished(id) {
-    if (state.players[id] !== undefined) { 
+    if (state.players[id] !== undefined) {
       return state.players[id].round.finished;
     }
     return false;
   }
 
   /** @param {FinishRoundCommand} command */
-  function finishRound(command) { 
+  function finishRound(command) {
     if (state.players[command.id] && state.players[command.id].round) {
       state.players[command.id].round.finished = true;
       state.players[command.id].round.cards = command.cards;
     } else {
-      console.error("Player or player round not found in finishRound:", command.id);
+      console.error(
+        "Player or player round not found in finishRound:",
+        command.id
+      );
     }
   }
 
   function getSelectedCards() {
     const selectedCards = {};
     for (const id of shuffle(getPlayers())) {
-      if (state.players[id].round.cards !== undefined) { 
+      if (state.players[id].round.cards !== undefined) {
         selectedCards[id] = state.players[id].round.cards;
       } else {
         selectedCards[id] = "espera os doentes escolherem as cartas";
@@ -199,13 +161,12 @@ export default function createGame() {
     return selectedCards;
   }
 
-
   /** @param {string} id */
   function getMyCards(id) {
-    if (state.players[id] !== undefined) { 
+    if (state.players[id] !== undefined) {
       return hand[id];
     }
-    return undefined; 
+    return undefined;
   }
 
   function qtdPlayers() {
@@ -215,7 +176,7 @@ export default function createGame() {
   /** @param {string} id */
   function qtdWins(id) {
     const w = wins[id];
-    if (w === undefined) { 
+    if (w === undefined) {
       return 0;
     }
     return w.length;
@@ -239,24 +200,28 @@ export default function createGame() {
   function setNextOwnerPlayer() {
     if (qtdPlayers() === 0) {
       state.round.current = null;
-      console.log("setNextOwnerPlayer: No players left, current owner set to null.");
+      console.log(
+        "setNextOwnerPlayer: No players left, current owner set to null."
+      );
       return;
     }
 
     const players = getPlayers();
     if (players.length === 0) {
-        state.round.current = null;
-        console.log("setNextOwnerPlayer: Players list is empty, current owner set to null.");
-        return;
+      state.round.current = null;
+      console.log(
+        "setNextOwnerPlayer: Players list is empty, current owner set to null."
+      );
+      return;
     }
-    
+
     let currentPosition = players.indexOf(state.round.current);
     if (currentPosition === -1 || players.length === 1) {
-        currentPosition = -1; 
+      currentPosition = -1;
     }
 
     let newPosition = currentPosition + 1;
-    if (newPosition >= players.length) { 
+    if (newPosition >= players.length) {
       newPosition = 0;
     }
 
@@ -276,7 +241,7 @@ export default function createGame() {
     ]);
 
     for (const pId of getPlayers()) {
-      if (state.players[pId]) { 
+      if (state.players[pId]) {
         state.players[pId].round = { finished: false, cards: null };
       }
     }
@@ -298,7 +263,7 @@ export default function createGame() {
     if (state.players[id]) {
       return state.players[id].name;
     }
-    return "Unknown Player"; 
+    return "Unknown Player";
   }
 
   function getRound() {
