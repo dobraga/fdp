@@ -46,7 +46,7 @@ export default function session() {
       console.log(`Removing "${key}"`);
       localStorage.removeItem(key);
     }
-    window.location.reload();
+    globalThis.location.reload();
   }
 
   function getCards() {

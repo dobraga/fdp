@@ -45,7 +45,7 @@ socket.on("set_cards_response", (/** @type {SetCardsResponseCommand} */ command)
       console.error("Current hand not found for player:", id);
       currentHand = [];
     }
-    let mutableHand = [...currentHand]; 
+    const mutableHand = [...currentHand]; 
 
     const newCards = [...command.new_cards]; 
     const playedCards = command.played_cards;

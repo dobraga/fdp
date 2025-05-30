@@ -199,10 +199,6 @@ export default function createGame() {
     return selectedCards;
   }
 
-  /** @param {PositionCardCommand} command */
-  function positionCard(command) {
-    return hand[command.id].indexOf(command.card);
-  }
 
   /** @param {string} id */
   function getMyCards(id) {

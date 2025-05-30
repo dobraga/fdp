@@ -1,7 +1,7 @@
 // UI Rendering Logic
 
 // Make the card is clickable
-function addEventListenerCards(card, document) { // Added document
+function addEventListenerCards(card) { // Added document
   card.style.cursor = "pointer";
   card.addEventListener("click", (el) => {
     el.target.classList.toggle("selected");
@@ -61,7 +61,7 @@ export function renderCards(gameState, mainPlayer, document, getMyCards, getSele
         const att = document.createAttribute("id"); // Ensure 'id' is the correct attribute name
         card.setAttributeNode(att);
         att.value = selectedId; // Ensure selectedId is a valid ID
-        addEventListenerCards(card, document);
+        addEventListenerCards(card);
       }
       cardsEl.appendChild(card);
     }
@@ -77,7 +77,7 @@ export function renderCards(gameState, mainPlayer, document, getMyCards, getSele
         card.innerHTML = myCards[i];
         // card.appendChild(badge);
         if (!isBlocked(mainPlayer.id)) { // isBlocked needs to be passed
-          addEventListenerCards(card, document);
+          addEventListenerCards(card);
         }
         cardsEl.appendChild(card);
       }
