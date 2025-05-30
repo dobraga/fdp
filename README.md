@@ -37,9 +37,8 @@
 
 1.  **Clone the repository**:
     ```bash
-    git clone <YOUR_REPOSITORY_URL_HERE> 
+    git clone https://github.com/dobraga/fdp
     ```
-    *(Replace `<YOUR_REPOSITORY_URL_HERE>` with the actual URL of this repository)*
 
 2.  **Navigate to the project directory**:
     ```bash
