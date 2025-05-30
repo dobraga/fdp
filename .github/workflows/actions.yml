@@ -24,7 +24,7 @@ jobs:
           deno-version: v1.x
 
       - name: Run linter
-        run: deno lint
+        run: deno lint --fix
 
       - name: Run tests
         run: deno test -A
