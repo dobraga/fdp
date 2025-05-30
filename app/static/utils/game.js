@@ -1,6 +1,6 @@
 import shuffle from "./shuffle.js";
 
-const null_state = {
+const nullState = {
   players: {},
   round: {
     current: null,
@@ -10,11 +10,11 @@ const null_state = {
 };
 
 export default function createGame() {
-  let state = JSON.parse(JSON.stringify(null_state));
-  let hand = {};
-  let wins = {};
+  const state = JSON.parse(JSON.stringify(nullState));
+  const hand = {};
+  const wins = {};
 
-  // Set owner round
+  /** @param {SetOwnerRoundCommand} command */
   function setOwnerRound(command) {
     if (command.round) {
       state.round.current = command.round.player;
@@ -23,7 +23,7 @@ export default function createGame() {
     }
   }
 
-  // Add a player
+  /** @param {PlayerCommand} command */
   function addPlayer(command) {
     const id = command.id;
     const name = command.username;
@@ -41,40 +41,59 @@ export default function createGame() {
     );
   }
 
-  // Set cards
+  /** @param {PlayerCommand} command */
   function setCardsHand(command) {
     hand[command.id] = command.cards;
   }
 
-  // Remove the player
+  /**
+   * @param {string} playerId
+   * @param {string[]} newCardsArray
+   */
+  function addCardsToHand(playerId, newCardsArray) {
+    if (!hand[playerId]) {
+      hand[playerId] = [];
+    }
+    hand[playerId].push(...newCardsArray);
+  }
+
+  /** @param {PlayerCommand} command */
   function removePlayer(command) {
     const id = command.id;
     console.log(`Client ${id} disconnected`);
-    if (yourTurn(command.id)) {
-      console.log("remove_current_owner");
+
+    const wasOwner = yourTurn(id);
+
+    delete state.players[id];
+    delete hand[id];
+    delete wins[id];
+
+    if (wasOwner && qtdPlayers() > 0) {
+      console.log("Disconnected player was owner, setting next owner.");
       setNextOwnerPlayer();
     }
-    delete state.players[id];
 
-    // If remove all player clean workspace
-    if (qtdPlayers() == 0) {
-      state = JSON.parse(JSON.stringify(null_state));
-      wins = {};
-      hand = {};
+    if (qtdPlayers() === 0) {
+      console.log(
+        "All players disconnected, resetting game state by modifying existing state object."
+      );
+      // Modify properties of the existing state object directly
+      state.round.current = null;
+      state.round.card = null;
+      state.round.qtdSpaces = 0;
+      state.players = {}; // Clear players from the state object
     }
   }
 
-  // Get list of players
   function getPlayers() {
     return Object.keys(state.players);
   }
 
-  // Set state on setup
+  /** @param {object} newState */ // Using generic object for newState due to its potential complexity
   function setState(newState) {
     Object.assign(state, newState);
   }
 
-  // Check if all players finished
   function allPlayersFinished() {
     let finished = true;
     for (const check_id of getPlayers()) {
@@ -85,11 +104,11 @@ export default function createGame() {
     return finished;
   }
 
-  // Check is blocked
+  /** @param {string} id */
   function isBlocked(id) {
     let check;
     if (yourTurn(id)) {
-      if (qtdPlayers() == 1) {
+      if (qtdPlayers() === 1) {
         check = true;
       } else {
         check = !allPlayersFinished();
@@ -101,51 +120,39 @@ export default function createGame() {
     return check;
   }
 
-  // Check if is your turn
+  /** @param {string} id */
   function yourTurn(id) {
-    if (state.players[id] != undefined) {
-      return state.round.current == id;
+    if (state.players[id] !== undefined) {
+      return state.round.current === id;
     }
     return false;
   }
 
-  // Check if the user finish the round
+  /** @param {string} id */
   function youFinished(id) {
-    if (state.players[id] != undefined) {
+    if (state.players[id] !== undefined) {
       return state.players[id].round.finished;
     }
     return false;
   }
 
-  // Finish round and prepare next round
+  /** @param {FinishRoundCommand} command */
   function finishRound(command) {
-    state.players[command.id].round.finished = true;
-    state.players[command.id].round.cards = command.cards;
-    state.players[command.id].round.nextCard = command.nextCard;
-  }
-
-  // Buy card
-  function buyCard(command) {
-    const id = command.id;
-    const cards = state.players[id].round.cards;
-
-    if (hand[id] == undefined) {
-      return;
-    }
-
-    for (const [i, card] of cards.entries()) {
-      const index = positionCard({ id: id, card: card });
-      const nextCard = state.players[id].round.nextCard[i];
-      console.log(`Change ${index}("${card}") -> "${nextCard}"`);
-      hand[id][index] = nextCard;
+    if (state.players[command.id] && state.players[command.id].round) {
+      state.players[command.id].round.finished = true;
+      state.players[command.id].round.cards = command.cards;
+    } else {
+      console.error(
+        "Player or player round not found in finishRound:",
+        command.id
+      );
     }
   }
 
-  // Get selected cards
   function getSelectedCards() {
     const selectedCards = {};
     for (const id of shuffle(getPlayers())) {
-      if (state.players[id].round.cards != undefined) {
+      if (state.players[id].round.cards !== undefined) {
         selectedCards[id] = state.players[id].round.cards;
       } else {
         selectedCards[id] = "espera os doentes escolherem as cartas";
@@ -154,33 +161,27 @@ export default function createGame() {
     return selectedCards;
   }
 
-  // Get position of selected card
-  function positionCard(command) {
-    return hand[command.id].indexOf(command.card);
-  }
-
-  // Get possible cards
+  /** @param {string} id */
   function getMyCards(id) {
-    if (state.players[id] != undefined) {
+    if (state.players[id] !== undefined) {
       return hand[id];
     }
+    return undefined;
   }
 
-  // # players
   function qtdPlayers() {
     return Object.keys(state.players).length;
   }
 
-  // # where the player wins
+  /** @param {string} id */
   function qtdWins(id) {
     const w = wins[id];
-    if (w == undefined) {
+    if (w === undefined) {
       return 0;
     }
     return w.length;
   }
 
-  // Get next owner of turn
   function getNextOwnerPlayer() {
     const players = getPlayers();
     const currentPosition = players.indexOf(state.round.current);
@@ -197,10 +198,30 @@ export default function createGame() {
   }
 
   function setNextOwnerPlayer() {
+    if (qtdPlayers() === 0) {
+      state.round.current = null;
+      console.log(
+        "setNextOwnerPlayer: No players left, current owner set to null."
+      );
+      return;
+    }
+
     const players = getPlayers();
-    const currentPosition = players.indexOf(state.round.current);
+    if (players.length === 0) {
+      state.round.current = null;
+      console.log(
+        "setNextOwnerPlayer: Players list is empty, current owner set to null."
+      );
+      return;
+    }
+
+    let currentPosition = players.indexOf(state.round.current);
+    if (currentPosition === -1 || players.length === 1) {
+      currentPosition = -1;
+    }
+
     let newPosition = currentPosition + 1;
-    if (currentPosition >= qtdPlayers() - 1) {
+    if (newPosition >= players.length) {
       newPosition = 0;
     }
 
@@ -211,7 +232,7 @@ export default function createGame() {
     state.round.current = newPlayerTurn;
   }
 
-  // Set winner and setup the next round
+  /** @param {SetWinnerCommand} command */
   function setWinnerSetupNextTurn(command) {
     const winner = command.winner;
 
@@ -219,12 +240,10 @@ export default function createGame() {
       { cards: command.cards, answer: command.answer },
     ]);
 
-    for (const id of getPlayers()) {
-      if (yourTurn(id)) {
-        continue;
+    for (const pId of getPlayers()) {
+      if (state.players[pId]) {
+        state.players[pId].round = { finished: false, cards: null };
       }
-      buyCard({ id: id });
-      state.players[id].round = { finished: false, card: null };
     }
 
     const commandNextTurn = {
@@ -239,42 +258,33 @@ export default function createGame() {
     setOwnerRound(commandNextTurn);
   }
 
-  // Get player name
+  /** @param {string} id */
   function getPlayerName(id) {
-    return state.players[id].name;
+    if (state.players[id]) {
+      return state.players[id].name;
+    }
+    return "Unknown Player";
   }
 
-  // Get current round
   function getRound() {
     return state.round;
   }
 
-  function render(OwnerUsername) {
-    console.log(`= rendering page for ${OwnerUsername}`);
-    renderListPlayers(this, OwnerUsername);
-    renderCards(this, OwnerUsername);
-  }
-
   return {
-    render,
     state,
     hand,
     wins,
     setState,
-
     addPlayer,
     removePlayer,
-
     getPlayerName,
     getRound,
     setOwnerRound,
     getPlayers,
-
     isBlocked,
     finishRound,
     yourTurn,
     youFinished,
-
     getSelectedCards,
     setCardsHand,
     getMyCards,
@@ -282,83 +292,6 @@ export default function createGame() {
     allPlayersFinished,
     setWinnerSetupNextTurn,
     qtdWins,
+    addCardsToHand,
   };
-}
-
-function renderListPlayers(game, OwnerUsername) {
-  const div = document.getElementById("users");
-  div.innerHTML = "";
-
-  for (const player of game.getPlayers()) {
-    const username = game.getPlayerName(player);
-    const li = document.createElement("div");
-    const qtdWins = game.qtdWins(player);
-
-    li.appendChild(document.createTextNode(`${username}(${qtdWins})`));
-    li.classList.add("user");
-
-    if (game.youFinished(player)) {
-      li.classList.add("finished");
-    }
-    if (game.yourTurn(player)) {
-      li.classList.add("turn");
-    }
-    if (player == OwnerUsername) {
-      li.classList.add("you");
-    }
-    div.appendChild(li);
-  }
-}
-
-function renderCards(game, OwnerUsername) {
-  const yourTurn = game.yourTurn(OwnerUsername);
-  const cards = document.getElementById("cards");
-  const isBlocked = game.isBlocked(OwnerUsername);
-  cards.innerHTML = "";
-
-  document.querySelector("#principal_card").innerHTML = game.getRound().card;
-
-  if (yourTurn) {
-    const selectedCards = game.getSelectedCards();
-    const finished = game.allPlayersFinished();
-
-    for (const selected in selectedCards) {
-      if (selected == OwnerUsername) {
-        continue;
-      }
-      const card = document.createElement("div");
-      card.className = "card";
-      if (finished) {
-        card.innerHTML = selectedCards[selected].join("<br />|+|<br />");
-        const att = document.createAttribute("id");
-        card.setAttributeNode(att);
-        att.value = selected;
-        addEventListenerCards(card);
-      }
-      cards.appendChild(card);
-    }
-  } else {
-    const myCards = game.getMyCards(OwnerUsername);
-    for (const i in myCards) {
-      const card = document.createElement("div");
-      const badge = document.createElement("div");
-      badge.className = "badge";
-
-      card.className = "card";
-      card.innerHTML = myCards[i];
-      // card.appendChild(badge);
-      if (!isBlocked) {
-        addEventListenerCards(card);
-      }
-      cards.appendChild(card);
-    }
-  }
-}
-
-// Make the card is clickable
-function addEventListenerCards(card) {
-  card.style.cursor = "pointer";
-  card.addEventListener("click", (el) => {
-    el.target.classList.toggle("selected");
-  });
 }

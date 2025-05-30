@@ -10,7 +10,7 @@ const app = new Application();
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-const handler = createSocketListen(io, app)
+const handler = createSocketListen(io, app);
 
 await serve(handler, {
   port: 8080,

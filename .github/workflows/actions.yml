@@ -24,10 +24,10 @@ jobs:
           deno-version: v1.x
 
       - name: Run linter
-        run: deno lint
+        run: deno lint --fix
 
       - name: Run tests
-        run: deno test -A
+        run: deno test -A --parallel --fail-fast=1
 
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
